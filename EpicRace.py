@@ -11,6 +11,7 @@ import configparser
 import shutil
 import codecs
 import traceback
+import random
 import threading
 import time
 
@@ -58,7 +59,19 @@ enable_suspense = config.getboolean('playSuspense', 'active')
 enable_win = config.getboolean('Victory', 'active')
 enable_lose = config.getboolean('Lose', 'active')
 
+def initSoundPack():
+    global list_tracks, audio, audio_folder
+    audio_folder = "apps\\python\\EpicRace\\SoundPacks\\" + audio
+    list_tracks = os.listdir(audio_folder)
+
 def playBeforeRace():
+    global audio_folder
+    location = random.choice(list_tracks)
+    location = os.path.join(audio_folder, location)
+    # priority clip cancels other audio. so that eg. left both right clear can be left right clear
+    box.FModSystem.stop()
+    # new fmod audio:
+    box.FModSystem.queueSong(location)
 
 def playSuspense():
 
