@@ -278,3 +278,5 @@ class SoundPlayer(object):
                 self.queue.pop(0)
                 queue_len = len(self.queue)
             self._play_event.clear()
+
+FModSystem = pyfmodex.System()
