@@ -35,26 +35,15 @@ except:
 from BOX.sim_info import info
 
 # Config is read. So.
-configfile = os.path.join(os.path.dirname(__file__), 'Spotter.ini')
+configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
 config = configparser.ConfigParser()
 config.read(configfile)
 
 # stuff that's read from the config
-fontsize = int(config['Display']['fontsize']) # should just be in normal point sizes.
-messageexpiry = int(config['Display']['messageduration']) # minimum length message should persist, in tenths of a second
-ignorestoppedcars = int(config['Display']['ignorestopped']) # number of seconds stationary before a car is ignored.
-textcolour = [float(i) for i in config['Display']['textcolour'].split(",")]
-language = config['Text']['source']
+
 audio = config['Audio']['source']
 audio_volume = int(config['Audio']['volume'])
 
-#stopspeed = int(config['Stop']['speed']) # max speed under which a car is treated as stopped, in m/s. 6->20km/h ish.
-carlength = int(config['Proximity']['length']) # length of car to assume it's side by side
-scanwidth = int(config['Proximity']['width']) # width to check in metres, on each side of your car
-slowratio = int(config['Slow']['ratio']) # percent of your own speed where car is "slow"
-carahead = int(config['Slow']['linewidth']) # width on either side of your driving line to call "ahead" instead of left/right
-scanlimit = int(config['Slow']['scandistance']) # max percent difference in spline position to check other driver behavior. 10% of the track.
-scanrange = int(config['Slow']['scantime']) # max distance in terms of milliseconds to hazard to start warning.
 enablesbs = config.getboolean('Proximity','active')
 enableslow = config.getboolean('Slow','active')
 enablestop = config.getboolean('Stop','active')
@@ -136,3 +125,4 @@ def acMain(ac_version):
 def acUpdate(deltaT):
 
 def acShutdown():
+    config.write(open(configfile, 'w'))
