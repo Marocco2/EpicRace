@@ -172,7 +172,7 @@ def github_newupdate(git_repo, branch='master', sha='', dir_path=''):
         r = requests.get(check_link, headers=headers)
         if sha == "":
             try:
-                with open('sha.txt', 'r') as g:
+                with open("apps\\python\\" + git_repo.split('/')[-1] + "\sha.txt", 'r') as g:
                     sha = g.read()
                     g.close()
             except:
