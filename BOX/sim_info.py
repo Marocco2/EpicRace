@@ -27,7 +27,7 @@ WBR, Rombik :)
 import mmap
 import functools
 import ctypes
-from ctypes import c_int32, c_float, c_wchar
+from ctypes import c_int32, c_float, c_wchar, c_bool
 
 
 AC_STATUS = c_int32
@@ -44,6 +44,14 @@ AC_HOTLAP = 3
 AC_TIME_ATTACK = 4
 AC_DRIFT = 5
 AC_DRAG = 6
+AC_FLAG_TYPE = c_int32
+AC_NO_FLAG = 0
+AC_BLUE_FLAG = 1
+AC_YELLOW_FLAG = 2
+AC_BLACK_FLAG = 3
+AC_WHITE_FLAG = 4
+AC_CHECKERED_FLAG = 5
+AC_PENALTY_FLAG = 6
 
 
 class SPageFilePhysics(ctypes.Structure):
@@ -78,7 +86,30 @@ class SPageFilePhysics(ctypes.Structure):
         ('numberOfTyresOut', c_int32),
         ('pitLimiterOn', c_int32),
         ('abs', c_float),
+        ('kersCharge', c_float),
+        ('kersInput', c_float),
+        ('autoShifterOn', c_int32),
+        ('rideHeight', c_float*2),
+        ('turboBoost', c_float),
+        ('ballast', c_float),
+        ('airDensity', c_float),
+        ('airTemp', c_float),
+        ('roadTemp', c_float),
+        
+        ('localAngularVel', c_float*3),
+        ('finalFF', c_float),
+        ('performanceMeter', c_float),
+        ('engineBrake', c_int32),
+        ('ersRecoveryLevel', c_int32),
+        ('ersPowerLevel', c_int32),
+        ('ersHeatCharging', c_int32),
+        ('ersIsCharging', c_int32),
+        ('kersCurrentKJ', c_float),
+        ('drsAvailable', c_int32),
+        ('drsEnabled', c_int32),
+        ('brakeTemp', c_float *4),
     ]
+    fieldnames = map(lambda x: x[0], _fields_)
 
 
 class SPageFileGraphic(ctypes.Structure):
@@ -87,6 +118,7 @@ class SPageFileGraphic(ctypes.Structure):
         ('packetId', c_int32),
         ('status', AC_STATUS),
         ('session', AC_SESSION_TYPE),
+         # NOTE: if you want str instead bytes, access it without '_'
         ('currentTime', c_wchar * 15),
         ('lastTime', c_wchar * 15),
         ('bestTime', c_wchar * 15),
@@ -107,14 +139,20 @@ class SPageFileGraphic(ctypes.Structure):
         ('replayTimeMultiplier', c_float),
         ('normalizedCarPosition', c_float),
         ('carCoordinates', c_float * 3),
-    ]
+        ('penaltyTime', c_float),
+        ('flag', AC_FLAG_TYPE),
+        ('idealLineOn', c_int32),
+        ('isInPitLane', c_int32),
+        ('surfaceGrip', c_float),
 
+    ]
+    fieldnames = map(lambda x: x[0], _fields_)
 
 class SPageFileStatic(ctypes.Structure):
     _pack_ = 4
     _fields_ = [
-        ('_smVersion', c_wchar * 15),
-        ('_acVersion', c_wchar * 15),
+        ('smVersion', c_wchar * 15),
+        ('acVersion', c_wchar * 15),
         # session static info
         ('numberOfSessions', c_int32),
         ('numCars', c_int32),
@@ -132,28 +170,54 @@ class SPageFileStatic(ctypes.Structure):
         ('maxFuel', c_float),
         ('suspensionMaxTravel', c_float * 4),
         ('tyreRadius', c_float * 4),
+        ('maxTurboBoost', c_float),
+
+        ('airTemp_deprecated', c_float),
+        ('roadTemp_deprecated', c_float),
+        
+        ('penaltiesEnabled', c_int32),
+        
+        ('aidFuelRate', c_float),
+        ('aidTireRate', c_float),
+        ('aidMechanicalDamage', c_float),
+        ('aidAllowTyreBlankets', c_int32),
+        ('aidStability', c_float),
+        ('aidAutoClutch', c_int32),
+        ('aidAutoBlib', c_int32),
+        
+        ('hasDRS', c_int32),
+        ('hasERS', c_int32),
+        ('hasKERS', c_int32),
+        ('kersMaxJ', c_float),
+        ('engineBrakeSettingsCount', c_int32),
+        ('ersPowerControllerCount', c_int32),
     ]
-
-
+    fieldnames = map(lambda x: x[0], _fields_)
+    
 class SimInfo:
     def __init__(self):
-        self._acpmf_physics = mmap.mmap(0, ctypes.sizeof(SPageFilePhysics), "acpmf_physics")
-        self._acpmf_graphics = mmap.mmap(0, ctypes.sizeof(SPageFileGraphic), "acpmf_graphics")
-        self._acpmf_static = mmap.mmap(0, ctypes.sizeof(SPageFileStatic), "acpmf_static")
-        self.physics = SPageFilePhysics.from_buffer(self._acpmf_physics)
-        self.graphics = SPageFileGraphic.from_buffer(self._acpmf_graphics)
-        self.static = SPageFileStatic.from_buffer(self._acpmf_static)
+        sizePhysics = ctypes.sizeof(SPageFilePhysics)
+        sizeGraphic = ctypes.sizeof(SPageFileGraphic)
+        sizeStatic = ctypes.sizeof(SPageFileStatic)
+        _acpmf_physics = mmap.mmap(0, sizePhysics, "acpmf_physics")
+        _acpmf_graphics = mmap.mmap(0, sizeGraphic, "acpmf_graphics")
+        _acpmf_static = mmap.mmap(0, sizeStatic, "acpmf_static")
+        self.physics = SPageFilePhysics.from_buffer_copy(_acpmf_physics)
+        self.graphics = SPageFileGraphic.from_buffer_copy(_acpmf_graphics)
+        self.static = SPageFileStatic.from_buffer_copy(_acpmf_static)
+        self.state = (_acpmf_physics.read(sizePhysics),_acpmf_graphics.read(sizeGraphic),_acpmf_static.read(sizeStatic))
+        _acpmf_physics.close()
+        _acpmf_graphics.close()
+        _acpmf_static.close()
 
-    def close(self):
-        self._acpmf_physics.close()
-        self._acpmf_graphics.close()
-        self._acpmf_static.close()
+    def __getstate__(self):
+        return self.state
 
-    def __del__(self):
-        self.close()
-
-info = SimInfo()
-
+    def __setstate__(self, state):
+        self.physics = SPageFilePhysics.from_buffer_copy(state[0])
+        self.graphics = SPageFileGraphic.from_buffer_copy(state[1])
+        self.static = SPageFileStatic.from_buffer_copy(state[2])
+        self.state = state
 
 def demo():
     import time
@@ -168,12 +232,15 @@ def do_test():
     for struct in info.static, info.graphics, info.physics:
         print(struct.__class__.__name__)
         for field, type_spec in struct._fields_:
+            if field.startswith("_"):
+                field = field[1:]
             value = getattr(struct, field)
             if not isinstance(value, (str, float, int)):
                 value = list(value)
-            print(" {} -> {} {}".format(field, type(value), value))
+            print(" {} -> {}".format(field, value))
 
 
 if __name__ == '__main__':
+    info = SimInfo()
     do_test()
     demo()
