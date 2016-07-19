@@ -62,7 +62,7 @@ enable_lose = config.getboolean('Lose', 'active')
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
-session = sessionTime = numberOfLaps = completedLaps = ""
+session = sessionTime = numberOfLaps = completedLaps = 0
 
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
@@ -279,9 +279,12 @@ def acMain(ac_version):
     #
     # DEBUG INFO
     #
-    debuglabel = ac.addLabel(appWindow,
-                             "Session: " + session + "Number of laps:" + numberOfLaps + "Completed Laps: " + completedLaps + "Overtakes: " + count_overtake + "SessionTime")
-    ac.setPosition(debuglabel, 180, 40)
+    debuglabel = ac.addLabel(appWindow, "Session: " + str(session) +
+                                        "\nNumber of laps:" + str(numberOfLaps) +
+                                        "\nCompleted Laps: " + str(completedLaps) +
+                                        "\nOvertakes: " + str(count_overtake) +
+                                        "\nSession Time: " + str(sessionTime))
+    ac.setPosition(debuglabel, 280, 180)
     ac.setSize(debuglabel, 200, 200)
     #
     #
@@ -321,6 +324,7 @@ def acUpdate(deltaT):
 
     session = info.graphics.session
     sessionTime = info.graphics.sessionTimeLeft
+    ac.log(log + "session time" + str(sessionTime))
     numberOfLaps = info.graphics.numberOfLaps
     completedLaps = info.graphics.completedLaps
 
