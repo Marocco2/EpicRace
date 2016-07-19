@@ -27,12 +27,12 @@ import ctypes
 importError = False
 
 try:
-    from BOX import box, win32con
+    from BOX import box, sim_info, win32con
 except:
     ac.log('BoxRadio: error loading BOX modules: ' + traceback.format_exc())
     importError = True
 
-from BOX.sim_info import info
+info = sim_info.SimInfo()
 
 # Config is read. So.
 configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
@@ -51,15 +51,20 @@ AutoUpdate = config.getboolean('SETTINGS', 'AUTOUPDATE')
 audio = config['Audio']['source']
 audio_volume = int(config['Audio']['volume'])
 
-suspense_laps = config['playSuspense']['laps']
+suspense_laps = config['Suspense']['laps']
 enable_before_race = config.getboolean('Before Race', 'active')
-enable_overtake = config.getboolean('playOvertake', 'active')
-enable_suspense = config.getboolean('playSuspense', 'active')
+enable_overtake = config.getboolean('Overtake', 'active')
+enable_suspense = config.getboolean('Suspense', 'active')
 enable_win = config.getboolean('Victory', 'active')
 enable_lose = config.getboolean('Lose', 'active')
 
+appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overtake = Suspense = Win = Lose = ""
+labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
+WinLabel = LoseLabel = audiolabel = ""
+
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
     start_time = finish_time = position = newposition = overtake = count_overtake = suspense_tracks = surprise_tracks = 0
+lose_tracks = 0
 
 isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
 
@@ -104,6 +109,14 @@ def playBeforeRace():
     isPlayingBeforeRace = True
 
 
+def playStartRace():
+    global audio_folder, start_race_tracks, isPlayingStartRace
+    location = random.choice(start_race_tracks)
+    location = os.path.join(audio_folder, location)
+    priority_queue(location)
+    isPlayingStartRace = True
+
+
 def playSuspense():
     global audio_folder, suspense_tracks, isPlayingSuspense
     location = random.choice(suspense_tracks)
@@ -146,16 +159,18 @@ def playOvertake():
     else:
         location = random.choice(epic_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location)
+        queue(location)
         isPlayingOvertake = True
 
 
 def acMain(ac_version):
+    global appWindow
     global sound_player, SoundPackSpinner, VolumeSpinner, Beforerace, Overtake, Suspense, Win, Lose, labeldesc
-    global StatusLabel, NotificationLabel, audio, audiolist
+    global StatusLabel, NotificationLabel, audio, audiolist, BeforeraceLabel, OvertakeLabel, SuspenseLabel
+    global WinLabel, LoseLabel, audiolabel, position
 
     appWindow = ac.newApp("Epic Race")
-    ac.setSize(appWindow, 430, 260)
+    ac.setSize(appWindow, 430, 320)
     ac.setTitle(appWindow, "Epic Race")
     ac.setBackgroundOpacity(appWindow, 0.5)
     ac.drawBorder(appWindow, 0)
@@ -163,57 +178,97 @@ def acMain(ac_version):
     SoundPackSpinner = ac.addSpinner(appWindow, "")
     ac.setFontColor(SoundPackSpinner, 1, 1, 1, 1)
     ac.setFontSize(SoundPackSpinner, 12)
-    spinner_config(SoundPackSpinner, 10, 15, 80, 18, 0, 1, 100, 0, onSoundPackChanged)
+    spinner_config(SoundPackSpinner, 10, 55, 80, 18, 0, 1, 10, 0, onSoundPackChanged)
     #
     VolumeSpinner = ac.addSpinner(appWindow, "")
     ac.setFontColor(VolumeSpinner, 1, 1, 1, 1)
     ac.setFontSize(VolumeSpinner, 12)
-    spinner_config(VolumeSpinner, 10, 45, 80, 18, 0, 1, 100, audio_volume, onVolumeChanged)
+    spinner_config(VolumeSpinner, 10, 105, 80, 18, 0, 1, 100, audio_volume, onVolumeChanged)
+    #
+    audiolabel = ac.addLabel(appWindow, "")
+    ac.setPosition(audiolabel, 10, 30)
+    ac.setFontColor(audiolabel, 1, 1, 1, 1)
+    ac.setFontSize(audiolabel, 15)
+    #
+    volumelabel = ac.addLabel(appWindow, "Volume")
+    ac.setPosition(volumelabel, 10, 80)
+    ac.setFontColor(volumelabel, 1, 1, 1, 1)
+    ac.setFontSize(volumelabel, 15)
 
     Beforerace = ac.addCheckBox(appWindow, "")
-    ac.setPosition(Beforerace, 10, 60)
+    ac.setValue(Beforerace, enable_before_race)
+    ac.setPosition(Beforerace, 10, 130)
     ac.setSize(Beforerace, 20, 20)
     ac.drawBorder(Beforerace, 1)
     ac.addOnCheckBoxChanged(Beforerace, onEnableBeforeRace)
     #
     Overtake = ac.addCheckBox(appWindow, "")
-    ac.setPosition(Overtake, 10, 90)
+    ac.setValue(Overtake, enable_overtake)
+    ac.setPosition(Overtake, 10, 160)
     ac.setSize(Overtake, 20, 20)
     ac.drawBorder(Overtake, 1)
-    ac.addOnCheckBoxChanged(Overtake, onEnableOverTake())
+    ac.addOnCheckBoxChanged(Overtake, onEnableOverTake)
     #
     Suspense = ac.addCheckBox(appWindow, "")
-    ac.setPosition(Suspense, 10, 120)
+    ac.setValue(Suspense, enable_suspense)
+    ac.setPosition(Suspense, 10, 190)
     ac.setSize(Suspense, 20, 20)
     ac.drawBorder(Suspense, 1)
     ac.addOnCheckBoxChanged(Suspense, onEnableSuspense)
     #
     Win = ac.addCheckBox(appWindow, "")
-    ac.setPosition(Win, 10, 150)
+    ac.setValue(Win, enable_win)
+    ac.setPosition(Win, 10, 220)
     ac.setSize(Win, 20, 20)
     ac.drawBorder(Win, 1)
     ac.addOnCheckBoxChanged(Win, onEnableWin)
     #
     Lose = ac.addCheckBox(appWindow, "")
-    ac.setPosition(Lose, 10, 180)
+    ac.setValue(Lose, enable_lose)
+    ac.setPosition(Lose, 10, 250)
     ac.setSize(Lose, 20, 20)
     ac.drawBorder(Lose, 1)
     ac.addOnCheckBoxChanged(Lose, onEnableLose)
     #
+    BeforeraceLabel = ac.addLabel(appWindow, "Enable before race")
+    ac.setPosition(BeforeraceLabel, 40, 130)
+    ac.setFontColor(BeforeraceLabel, 1, 1, 1, 1)
+    ac.setFontSize(BeforeraceLabel, 15)
+    #
+    OvertakeLabel = ac.addLabel(appWindow, "Enable overtake")
+    ac.setPosition(OvertakeLabel, 40, 160)
+    ac.setFontColor(OvertakeLabel, 1, 1, 1, 1)
+    ac.setFontSize(OvertakeLabel, 15)
+    #
+    SuspenseLabel = ac.addLabel(appWindow, "Enable suspense")
+    ac.setPosition(SuspenseLabel, 40, 190)
+    ac.setFontColor(SuspenseLabel, 1, 1, 1, 1)
+    ac.setFontSize(SuspenseLabel, 15)
+    #
+    WinLabel = ac.addLabel(appWindow, "Enable win")
+    ac.setPosition(WinLabel, 40, 220)
+    ac.setFontColor(WinLabel, 1, 1, 1, 1)
+    ac.setFontSize(WinLabel, 15)
+    #
+    LoseLabel = ac.addLabel(appWindow, "Enable lose")
+    ac.setPosition(LoseLabel, 40, 250)
+    ac.setFontColor(LoseLabel, 1, 1, 1, 1)
+    ac.setFontSize(LoseLabel, 15)
+    #
     labeldesc = ac.addLabel(appWindow, "You can close the app. It works in "
                                        "background")
-    ac.setPosition(labeldesc, 160, 10)
+    ac.setPosition(labeldesc, 180, 40)
     ac.setSize(labeldesc, 200, 200)
     #
     StatusLabel = ac.addLabel(appWindow, Status)
-    ac.setPosition(StatusLabel, 10, 205)
+    ac.setPosition(StatusLabel, 10, 275)
     ac.setFontColor(StatusLabel, 1, 1, 1, 1)
-    ac.setFontSize(StatusLabel, 10)
+    ac.setFontSize(StatusLabel, 15)
     #
     NotificationLabel = ac.addLabel(appWindow, Notify)
-    ac.setPosition(NotificationLabel, 10, 235)
+    ac.setPosition(NotificationLabel, 10, 305)
     ac.setFontColor(NotificationLabel, 1, 1, 1, 1)
-    ac.setFontSize(NotificationLabel, 9)
+    ac.setFontSize(NotificationLabel, 12)
     #
     #
     #
@@ -227,6 +282,12 @@ def acMain(ac_version):
     ac.setRange(SoundPackSpinner, 0, len(audiolist) - 1)
     ac.setStep(SoundPackSpinner, 1)
     ac.setValue(SoundPackSpinner, audiolist.index(audio))
+
+    getNotification()
+    if AutoUpdate:
+        CheckNewUpdate()
+    initSoundPack(audio)
+    position = ac.getCarLeaderboardPosition(0)
 
     return "EpicRace"
 
@@ -244,17 +305,8 @@ def acUpdate(deltaT):
     global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps
     global AppInitialised, audio, overtake, position, newposition, start_time, finish_time, count_overtake
 
-    if not AppInitialised:  # First call to app, set variables
-        getNotification()
-        if AutoUpdate:
-            CheckNewUpdate()
-        initSoundPack(audio)
-        position = ac.getCarLeaderboardPosition(0)
-
-        AppInitialised = True
-
     if info.graphics.session == 2:  # Race sessions
-        if enable_before_race and info.graphics.sessionTimeleft < 1:
+        if enable_before_race and info.graphics.sessionTimeLeft < 1:
             playBeforeRace()
         if enable_overtake:
             newposition = ac.getCarLeaderboardPosition(0)
@@ -268,18 +320,17 @@ def acUpdate(deltaT):
                 finish_time = time.perf_counter()
                 overtake += 1
                 count_overtake += 1
-            if overtake == 2 and (finish_time - start_time) < 30 or overtake == 1 and ac.getCarLeaderboardPosition(
-                    0) == 1:
+            if overtake == 2 and (finish_time - start_time) < 30 or overtake == 1 and ac.getCarLeaderboardPosition(0) == 1:
                 count_overtake += 1
                 overtake = 0
                 playOvertake()
         if enable_suspense and (info.graphics.numberOfLaps - info.graphics.completedLaps) <= suspense_laps:
             playSuspense()
         if enable_win and ac.getCarLeaderboardPosition(0) == '1' and (
-            info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
+                    info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
             playAfterRace('win')
         if enable_lose and ac.getCarLeaderboardPosition(0) != '1' and (
-            info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
+                    info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
             playAfterRace('lose')
 
     if info.graphics.session == 1:  # Qualify session
@@ -368,11 +419,11 @@ def onSoundPackChanged(value):
       Select the audio set that you
       would like to use.
       This refers to a folder in the
-      app's /audio/ directory.''')
+      app's /SoundPacks/ directory.''')
 
 
 def onVolumeChanged(value):
-    global audio_volume, VolumeSpinner
+    global audio_volume, VolumeSpinner, sound_player
     audio_volume = value
     sound_player.set_volume(value / 100.0)
     config['Audio']['volume'] = str(value)

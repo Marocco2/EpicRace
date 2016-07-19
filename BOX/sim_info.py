@@ -29,7 +29,6 @@ import functools
 import ctypes
 from ctypes import c_int32, c_float, c_wchar, c_bool
 
-
 AC_STATUS = c_int32
 AC_OFF = 0
 AC_REPLAY = 1
@@ -89,14 +88,14 @@ class SPageFilePhysics(ctypes.Structure):
         ('kersCharge', c_float),
         ('kersInput', c_float),
         ('autoShifterOn', c_int32),
-        ('rideHeight', c_float*2),
+        ('rideHeight', c_float * 2),
         ('turboBoost', c_float),
         ('ballast', c_float),
         ('airDensity', c_float),
         ('airTemp', c_float),
         ('roadTemp', c_float),
-        
-        ('localAngularVel', c_float*3),
+
+        ('localAngularVel', c_float * 3),
         ('finalFF', c_float),
         ('performanceMeter', c_float),
         ('engineBrake', c_int32),
@@ -107,7 +106,7 @@ class SPageFilePhysics(ctypes.Structure):
         ('kersCurrentKJ', c_float),
         ('drsAvailable', c_int32),
         ('drsEnabled', c_int32),
-        ('brakeTemp', c_float *4),
+        ('brakeTemp', c_float * 4),
     ]
     fieldnames = map(lambda x: x[0], _fields_)
 
@@ -118,7 +117,7 @@ class SPageFileGraphic(ctypes.Structure):
         ('packetId', c_int32),
         ('status', AC_STATUS),
         ('session', AC_SESSION_TYPE),
-         # NOTE: if you want str instead bytes, access it without '_'
+        # NOTE: if you want str instead bytes, access it without '_'
         ('currentTime', c_wchar * 15),
         ('lastTime', c_wchar * 15),
         ('bestTime', c_wchar * 15),
@@ -148,6 +147,7 @@ class SPageFileGraphic(ctypes.Structure):
     ]
     fieldnames = map(lambda x: x[0], _fields_)
 
+
 class SPageFileStatic(ctypes.Structure):
     _pack_ = 4
     _fields_ = [
@@ -174,9 +174,9 @@ class SPageFileStatic(ctypes.Structure):
 
         ('airTemp_deprecated', c_float),
         ('roadTemp_deprecated', c_float),
-        
+
         ('penaltiesEnabled', c_int32),
-        
+
         ('aidFuelRate', c_float),
         ('aidTireRate', c_float),
         ('aidMechanicalDamage', c_float),
@@ -184,7 +184,7 @@ class SPageFileStatic(ctypes.Structure):
         ('aidStability', c_float),
         ('aidAutoClutch', c_int32),
         ('aidAutoBlib', c_int32),
-        
+
         ('hasDRS', c_int32),
         ('hasERS', c_int32),
         ('hasKERS', c_int32),
@@ -193,7 +193,8 @@ class SPageFileStatic(ctypes.Structure):
         ('ersPowerControllerCount', c_int32),
     ]
     fieldnames = map(lambda x: x[0], _fields_)
-    
+
+
 class SimInfo:
     def __init__(self):
         sizePhysics = ctypes.sizeof(SPageFilePhysics)
@@ -205,7 +206,8 @@ class SimInfo:
         self.physics = SPageFilePhysics.from_buffer_copy(_acpmf_physics)
         self.graphics = SPageFileGraphic.from_buffer_copy(_acpmf_graphics)
         self.static = SPageFileStatic.from_buffer_copy(_acpmf_static)
-        self.state = (_acpmf_physics.read(sizePhysics),_acpmf_graphics.read(sizeGraphic),_acpmf_static.read(sizeStatic))
+        self.state = (
+        _acpmf_physics.read(sizePhysics), _acpmf_graphics.read(sizeGraphic), _acpmf_static.read(sizeStatic))
         _acpmf_physics.close()
         _acpmf_graphics.close()
         _acpmf_static.close()
@@ -218,6 +220,7 @@ class SimInfo:
         self.graphics = SPageFileGraphic.from_buffer_copy(state[1])
         self.static = SPageFileStatic.from_buffer_copy(state[2])
         self.state = state
+
 
 def demo():
     import time
