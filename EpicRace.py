@@ -29,10 +29,11 @@ importError = False
 try:
     from BOX import box, sim_info, win32con
 except:
-    ac.log('BoxRadio: error loading BOX modules: ' + traceback.format_exc())
+    ac.log('EpicRace: error loading BOX modules: ' + traceback.format_exc())
     importError = True
 
 info = sim_info.SimInfo()
+log = "EpicRace: "
 
 # Config is read. So.
 configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
@@ -61,6 +62,8 @@ enable_lose = config.getboolean('Lose', 'active')
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
+session = sessionTime = numberOfLaps = completedLaps = ""
+
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
     start_time = finish_time = position = newposition = overtake = count_overtake = suspense_tracks = surprise_tracks = 0
@@ -69,10 +72,10 @@ lose_tracks = 0
 isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
 
 
-def initSoundPack(audio):
+def initSoundPack(audio_source):
     global list_tracks, audio_folder, before_race_tracks, epic_tracks, win_tracks, win_with_sweat_tracks
     global start_race_tracks, lose_tracks, suspense_tracks, surprise_tracks
-    audio_folder = "apps\\python\\EpicRace\\SoundPacks\\" + audio
+    audio_folder = "apps\\python\\EpicRace\\SoundPacks\\" + audio_source
     list_tracks = os.listdir(audio_folder)
 
     def contains(string):
@@ -167,7 +170,11 @@ def acMain(ac_version):
     global appWindow
     global sound_player, SoundPackSpinner, VolumeSpinner, Beforerace, Overtake, Suspense, Win, Lose, labeldesc
     global StatusLabel, NotificationLabel, audio, audiolist, BeforeraceLabel, OvertakeLabel, SuspenseLabel
-    global WinLabel, LoseLabel, audiolabel, position
+    global WinLabel, LoseLabel, audiolabel, position, debuglabel
+    # DEBUG INFO
+    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps, log
+    global audio, overtake, position, newposition, start_time, finish_time, count_overtake
+    global session, sessionTime, numberOfLaps, completedLaps
 
     appWindow = ac.newApp("Epic Race")
     ac.setSize(appWindow, 430, 320)
@@ -270,6 +277,13 @@ def acMain(ac_version):
     ac.setFontColor(NotificationLabel, 1, 1, 1, 1)
     ac.setFontSize(NotificationLabel, 12)
     #
+    # DEBUG INFO
+    #
+    debuglabel = ac.addLabel(appWindow,
+                             "Session: " + session + "Number of laps:" + numberOfLaps + "Completed Laps: " + completedLaps + "Overtakes: " + count_overtake + "SessionTime")
+    ac.setPosition(debuglabel, 180, 40)
+    ac.setSize(debuglabel, 200, 200)
+    #
     #
     #
     box.FModSystem.init()
@@ -286,7 +300,6 @@ def acMain(ac_version):
     getNotification()
     if AutoUpdate:
         CheckNewUpdate()
-    initSoundPack(audio)
     position = ac.getCarLeaderboardPosition(0)
 
     return "EpicRace"
@@ -302,51 +315,67 @@ def spinner_config(spinner, x, y, xl, yl, min, step, max, value, evt):
 
 
 def acUpdate(deltaT):
-    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps
-    global AppInitialised, audio, overtake, position, newposition, start_time, finish_time, count_overtake
+    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps, log
+    global audio, overtake, position, newposition, start_time, finish_time, count_overtake
+    global session, sessionTime, numberOfLaps, completedLaps
 
-    if info.graphics.session == 2:  # Race sessions
-        if enable_before_race and info.graphics.sessionTimeLeft < 1:
+    session = info.graphics.session
+    sessionTime = info.graphics.sessionTimeLeft
+    numberOfLaps = info.graphics.numberOfLaps
+    completedLaps = info.graphics.completedLaps
+
+    if session == 2:  # Race sessions
+        # ac.log(log + "Race session")
+        if enable_before_race and sessionTime < 1:
+            ac.log(log + "Before race detected")
             playBeforeRace()
         if enable_overtake:
             newposition = ac.getCarLeaderboardPosition(0)
             if position > newposition:
+                ac.log(log + "Overtake detected")
                 position = newposition
                 start_time = time.perf_counter()
                 overtake += 1
                 count_overtake += 1
             if position > newposition and overtake == 1:
+                ac.log(log + "Overtake detected x2")
                 position = newposition
                 finish_time = time.perf_counter()
                 overtake += 1
                 count_overtake += 1
-            if overtake == 2 and (finish_time - start_time) < 30 or overtake == 1 and ac.getCarLeaderboardPosition(0) == 1:
+            if overtake == 2 and (finish_time - start_time) < 30 or overtake == 1 and ac.getCarLeaderboardPosition(
+                    0) == 1:
+                ac.log(log + "Epicness detected")
                 count_overtake += 1
                 overtake = 0
                 playOvertake()
-        if enable_suspense and (info.graphics.numberOfLaps - info.graphics.completedLaps) <= suspense_laps:
+        if enable_suspense and (numberOfLaps - completedLaps) <= suspense_laps:
+            ac.log(log + "Suspense detected")
             playSuspense()
-        if enable_win and ac.getCarLeaderboardPosition(0) == '1' and (
-                    info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
+        if enable_win and ac.getCarLeaderboardPosition(0) == '1' and (numberOfLaps - completedLaps) == "0":
+            ac.log(log + "Win detected")
             playAfterRace('win')
-        if enable_lose and ac.getCarLeaderboardPosition(0) != '1' and (
-                    info.graphics.numberOfLaps - info.graphics.completedLaps) == "0":
+        if enable_lose and ac.getCarLeaderboardPosition(0) != '1' and (numberOfLaps - completedLaps) == "0":
+            ac.log(log + "Lose detected")
             playAfterRace('lose')
 
     if info.graphics.session == 1:  # Qualify session
+        # ac.log(log + "Race session")
         if enable_suspense and info.graphics.sessionTimeleft < 1:
+            ac.log(log + "Suspense detected")
             playSuspense()
         if enable_win and ac.getCarLeaderboardPosition(0) == '1':
+            ac.log(log + "Win detected")
             playAfterRace('win')
 
 
 def CheckNewUpdate():
     global Status, StatusLabel, branch
     try:
-        Status = box.github_newupdate('Marocco2/BoxRadio', branch)
+        Status = box.github_newupdate('Marocco2/EpicRace', branch)
         ac.setText(StatusLabel, Status)
     except:
-        ac.log('BoxRadio: No internet connection')
+        ac.log('EpicRace: No internet connection')
         Status = "No internet connection"
         ac.setText(StatusLabel, Status)
 
@@ -357,7 +386,7 @@ def getNotification():
         Notify = box.notification('186810231:AAF3QvyDtyjZSuoFEdiDk70dl_Q6e7RAZgg')
         ac.setText(NotificationLabel, Notify)
     except:
-        ac.log('BoxRadio: No internet connection')
+        ac.log('EpicRace: No internet connection')
         Status = "No internet connection"
         ac.setText(StatusLabel, Status)
 
@@ -381,37 +410,42 @@ def setHighlight(item):
 
 def onEnableBeforeRace(value):
     global enable_before_race
+    value = int(ac.getValue(Beforerace))
     enable_before_race = value
     config['Before Race']['active'] = str(value)
 
 
 def onEnableOverTake(value):
     global enable_overtake
+    value = int(ac.getValue(Overtake))
     enable_overtake = value
     config['Overtake']['active'] = str(value)
 
 
 def onEnableSuspense(value):
     global enable_suspense
+    value = int(ac.getValue(Suspense))
     enable_suspense = value
     config['Suspense']['active'] = str(value)
 
 
 def onEnableWin(value):
     global enable_win
+    value = int(ac.getValue(Win))
     enable_win = value
     config['Victory']['active'] = str(value)
 
 
 def onEnableLose(value):
     global enable_lose
+    value = int(ac.getValue(Lose))
     enable_lose = value
     config['Lose']['active'] = str(value)
 
 
-def onSoundPackChanged(value):
+def onSoundPackChanged(x):
     global audiolist, audiolabel, config, audio, SoundPackSpinner
-    audio = audiolist[value]
+    audio = audiolist[int(ac.getValue(SoundPackSpinner))]
     ac.setText(audiolabel, audio)
     config['Audio']['source'] = str(audio)
     initSoundPack(audio)
@@ -424,9 +458,9 @@ def onSoundPackChanged(value):
 
 def onVolumeChanged(value):
     global audio_volume, VolumeSpinner, sound_player
-    audio_volume = value
-    sound_player.set_volume(value / 100.0)
-    config['Audio']['volume'] = str(value)
+    audio_volume = int(ac.getValue(VolumeSpinner))
+    sound_player.set_volume(audio_volume / 100.0)
+    config['Audio']['volume'] = str(audio_volume)
     setDescription(VolumeSpinner, '''
     Set the overall volume of
     the app.''')
