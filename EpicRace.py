@@ -62,7 +62,7 @@ enable_lose = config.getboolean('Lose', 'active')
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
-session = sessionTime = numberOfLaps = completedLaps = 0
+session = sessionTime = numberOfLaps = completedLaps = overflow = 0
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
     start_time = finish_time = position = newposition = overtake = count_overtake = suspense_tracks = surprise_tracks = 0
@@ -94,12 +94,23 @@ def initSoundPack(audio_source):
 @box.async
 def priority_queue(location, isPlaying):
     try:
-        global sound_player
-        # priority clip cancels other audio. so that eg. left both right clear can be left right clear
-        sound_player.stop()
+        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global overflow
+        # priority clip cancels other audio.
+        stopPlaying()
         # new fmod audio:
         sound_player.queueSong(location)
-        isPlaying = True
+        overflow += 2
+        if isPlaying == "isPlayingStartRace":
+            isPlayingStartRace = True
+        if isPlaying == "isPlayingBeforeRace":
+            isPlayingBeforeRace = True
+        if isPlaying == "isPlayingSuspense":
+            isPlayingSuspense = True
+        if isPlaying == "isPlayingAfterRace":
+            isPlayingAfterRace = True
+        if isPlaying == "isPlayingOvertake":
+            isPlayingOvertake = True
     except:
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
@@ -107,9 +118,11 @@ def priority_queue(location, isPlaying):
 @box.async
 def queue(location, isPlaying):
     try:
-        global sound_player
+        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global overflow
         # new fmod audio:
         sound_player.queueSong(location)
+        overflow += 1
     except:
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
@@ -117,6 +130,7 @@ def queue(location, isPlaying):
 @box.async
 def stopPlaying():
     global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+    global overflow
     sound_player.stop()
     isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
 
@@ -125,21 +139,21 @@ def playBeforeRace():
     global audio_folder, before_race_tracks, isPlayingBeforeRace
     location = random.choice(before_race_tracks)
     location = os.path.join(audio_folder, location)
-    priority_queue(location, isPlayingBeforeRace)
+    priority_queue(location, "isPlayingBeforeRace")
 
 
 def playStartRace():
     global audio_folder, start_race_tracks, isPlayingStartRace
     location = random.choice(start_race_tracks)
     location = os.path.join(audio_folder, location)
-    priority_queue(location, isPlayingStartRace)
+    priority_queue(location, "isPlayingStartRace")
 
 
 def playSuspense():
     global audio_folder, suspense_tracks, isPlayingSuspense
     location = random.choice(suspense_tracks)
     location = os.path.join(audio_folder, location)
-    queue(location, isPlayingSuspense)
+    queue(location, "isPlayingSuspense")
 
 
 def playAfterRace(win_or_lose):
@@ -147,19 +161,19 @@ def playAfterRace(win_or_lose):
     if win_or_lose == "win" and count_overtake < 7:
         location = random.choice(win_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, isPlayingAfterRace)
+        priority_queue(location, "isPlayingAfterRace")
         count_overtake = 0
         isPlayingAfterRace = True
 
     if win_or_lose == "win" and count_overtake >= 7:
         location = random.choice(win_with_sweat_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, isPlayingAfterRace)
+        priority_queue(location, "isPlayingAfterRace")
         count_overtake = 0
-    else:
+    if win_or_lose == "lose":
         location = random.choice(lose_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, isPlayingAfterRace)
+        priority_queue(location, "isPlayingAfterRace")
         count_overtake = 0
 
 
@@ -168,13 +182,11 @@ def playOvertake():
     if isPlayingSuspense:
         location = random.choice(surprise_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location)
-        isPlayingOvertake = True
+        priority_queue(location, "isPlayingOvertake")
     else:
         location = random.choice(epic_tracks)
         location = os.path.join(audio_folder, location)
-        queue(location)
-        isPlayingOvertake = True
+        queue(location, "isPlayingOvertake")
 
 
 def acMain(ac_version):
@@ -326,7 +338,8 @@ def spinner_config(spinner, x, y, xl, yl, min, step, max, value, evt):
 def acUpdate(deltaT):
     global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps, log
     global audio, overtake, position, newposition, start_time, finish_time, count_overtake
-    global session, sessionTime, numberOfLaps, completedLaps, debuglabel
+    global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow
+    global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
 
     session = info.graphics.session
     sessionTime = info.graphics.sessionTimeLeft
@@ -341,57 +354,62 @@ def acUpdate(deltaT):
                "\nSession Time: " + repr(sessionTime) +
                "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)))
 
-    if session == 2:  # Race sessions
-        # ac.log(log + "Race session")
-        if enable_before_race and not isPlayingBeforeRace and sessionTime > 1800000:
-            ac.log(log + "Before race detected")
-            playBeforeRace()
-        if enable_overtake and not isPlayingOvertake and sessionTime < 1800000:
-            newposition = ac.getCarRealTimeLeaderboardPosition(0)
-            if position > newposition and overtake != 2:
-                ac.log(log + "Overtake detected")
-                position = newposition
-                start_time = time.perf_counter()
-                overtake += 1
-                count_overtake += 1
-            if position < newposition:
-                ac.log(log + "Undertake detected")
-                position = newposition
-                start_time = time.perf_counter()
-                overtake -= 1
-            if overtake == 2:
-                ac.log(log + "Overtake detected x2")
-                position = newposition
-                finish_time = time.perf_counter()
-                count_overtake += 1
-            if finish_time - start_time < 30:
-                ac.log(log + "Epicness detected because 2 overtakes")
-                overtake = 0
-                playOvertake()
-            if overtake == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 1:
-                ac.log(log + "Epicness detected because you are 1st")
-                overtake = 0
-                playOvertake()
-        if enable_suspense and not isPlayingSuspense and (numberOfLaps - completedLaps) <= suspense_laps:
-            ac.log(log + "Suspense detected")
-            playSuspense()
-        if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == '0' and (
-                    numberOfLaps - completedLaps) == "0":
-            ac.log(log + "Win detected")
-            playAfterRace('win')
-        if enable_lose and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) != '0' and (
-                    numberOfLaps - completedLaps) == "0":
-            ac.log(log + "Lose detected")
-            playAfterRace('lose')
+    if overflow < 20:
+        if session == 2:  # Race sessions
+            # ac.log(log + "Race session")
+            if enable_before_race and not isPlayingBeforeRace and sessionTime > 1800000:
+                ac.log(log + "Before race detected")
+                playBeforeRace()
+            if enable_overtake and not isPlayingOvertake and sessionTime < 1800000:
+                newposition = ac.getCarRealTimeLeaderboardPosition(0)
+                if position > newposition and overtake != 2:
+                    ac.log(log + "Overtake detected")
+                    position = newposition
+                    start_time = time.perf_counter()
+                    overtake += 1
+                    count_overtake += 1
+                if position < newposition:
+                    ac.log(log + "Undertake detected")
+                    position = newposition
+                    start_time = time.perf_counter()
+                    overtake -= 1
+                if overtake == 2:
+                    ac.log(log + "Overtake detected x2")
+                    position = newposition
+                    finish_time = time.perf_counter()
+                    count_overtake += 1
+                if finish_time - start_time < 30:
+                    ac.log(log + "Epicness detected because 2 overtakes")
+                    overtake = 0
+                    playOvertake()
+                if overtake == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 1:
+                    ac.log(log + "Epicness detected because you are 1st")
+                    overtake = 0
+                    playOvertake()
+            if enable_suspense and not isPlayingSuspense and (numberOfLaps - completedLaps) <= suspense_laps:
+                ac.log(log + "Suspense detected")
+                playSuspense()
+            if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == '0' and (
+                        numberOfLaps - completedLaps) == "0":
+                ac.log(log + "Win detected")
+                playAfterRace('win')
+            if enable_lose and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) != '0' and (
+                        numberOfLaps - completedLaps) == "0":
+                ac.log(log + "Lose detected")
+                playAfterRace('lose')
 
-    if session == 1:  # Qualify session
-        # ac.log(log + "Qualify session")
-        if enable_suspense and info.graphics.sessionTimeleft < 1:
-            ac.log(log + "Suspense detected")
-            playSuspense()
-        if enable_win and ac.getCarRealTimeLeaderboardPosition(0) == '1':
-            ac.log(log + "Win detected")
-            playAfterRace('win')
+        if session == 1:  # Qualify session
+            # ac.log(log + "Qualify session")
+            if enable_suspense and info.graphics.sessionTimeleft < 1:
+                ac.log(log + "Suspense detected")
+                playSuspense()
+            if enable_win and ac.getCarRealTimeLeaderboardPosition(0) == '1':
+                ac.log(log + "Win detected")
+                playAfterRace('win')
+
+    if overflow >= 20:
+        stopPlaying()
+        ac.log(log + "BSOD avoided. THERE WAS AN OVERFOW")
 
 
 def CheckNewUpdate():
