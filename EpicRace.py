@@ -91,6 +91,7 @@ def initSoundPack(audio_source):
     surprise_tracks = contains("surprise")
 
 
+@box.async
 def priority_queue(location):
     try:
         global sound_player
@@ -102,6 +103,7 @@ def priority_queue(location):
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
 
+@box.async
 def queue(location):
     try:
         global sound_player
@@ -109,6 +111,7 @@ def queue(location):
         sound_player.queueSong(location)
     except:
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
+
 
 def playBeforeRace():
     global audio_folder, before_race_tracks, isPlayingBeforeRace
@@ -286,7 +289,7 @@ def acMain(ac_version):
     # DEBUG INFO
     #
     debuglabel = ac.addLabel(appWindow, "")
-    ac.setPosition(debuglabel, 200, 180)
+    ac.setPosition(debuglabel, 200, 150)
     ac.setSize(debuglabel, 200, 200)
     #
     #
@@ -357,8 +360,8 @@ def acUpdate(deltaT):
                 overtake += 1
                 count_overtake += 1
             if overtake == 2 and (
-                finish_time - start_time) < 30 or overtake == 1 and ac.getCarRealTimeLeaderboardPosition(
-                    0) == 1:
+                        finish_time - start_time) < 30 or overtake == 1 and ac.getCarRealTimeLeaderboardPosition(
+                0) == 1:
                 ac.log(log + "Epicness detected")
                 count_overtake += 1
                 overtake = 0
@@ -366,10 +369,12 @@ def acUpdate(deltaT):
         if enable_suspense and not isPlayingSuspense and (numberOfLaps - completedLaps) <= suspense_laps:
             ac.log(log + "Suspense detected")
             playSuspense()
-        if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == '0' and (numberOfLaps - completedLaps) == "0":
+        if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == '0' and (
+                    numberOfLaps - completedLaps) == "0":
             ac.log(log + "Win detected")
             playAfterRace('win')
-        if enable_lose and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) != '0' and (numberOfLaps - completedLaps) == "0":
+        if enable_lose and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) != '0' and (
+                    numberOfLaps - completedLaps) == "0":
             ac.log(log + "Lose detected")
             playAfterRace('lose')
 
