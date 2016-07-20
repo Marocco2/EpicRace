@@ -247,6 +247,7 @@ class SoundPlayer(object):
         while self.queue:
             self.queue.pop()
 
+    @async
     def queueSong(self, filename=None):
         if filename is not None:
             if os.path.isfile(filename):

@@ -91,7 +91,6 @@ def initSoundPack(audio_source):
     surprise_tracks = contains("surprise")
 
 
-@box.async
 def priority_queue(location, isPlaying):
     try:
         global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
@@ -115,7 +114,6 @@ def priority_queue(location, isPlaying):
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
 
-@box.async
 def queue(location, isPlaying):
     try:
         global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
@@ -127,7 +125,6 @@ def queue(location, isPlaying):
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
 
-@box.async
 def stopPlaying():
     global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
     global overflow
@@ -136,10 +133,11 @@ def stopPlaying():
 
 
 def playBeforeRace():
-    global audio_folder, before_race_tracks, isPlayingBeforeRace
+    global audio_folder, before_race_tracks, isPlayingBeforeRace, sessionTime
     location = random.choice(before_race_tracks)
     location = os.path.join(audio_folder, location)
     priority_queue(location, "isPlayingBeforeRace")
+
 
 
 def playStartRace():
@@ -341,6 +339,7 @@ def acUpdate(deltaT):
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
 
+    status = info.graphics.status
     session = info.graphics.session
     sessionTime = info.graphics.sessionTimeLeft
     # ac.log(log + "session time" + str(sessionTime))
@@ -352,7 +351,8 @@ def acUpdate(deltaT):
                "\nCompleted Laps: " + repr(completedLaps) +
                "\nOvertakes: " + repr(count_overtake) +
                "\nSession Time: " + repr(sessionTime) +
-               "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)))
+               "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
+               "\nStatus: " + repr(status))
 
     if overflow < 20:
         if session == 2:  # Race sessions
@@ -360,6 +360,8 @@ def acUpdate(deltaT):
             if enable_before_race and not isPlayingBeforeRace and sessionTime > 1800000:
                 ac.log(log + "Before race detected")
                 playBeforeRace()
+            if enable_before_race and isPlayingBeforeRace and sessionTime <= 1800000:
+                stopPlaying()
             if enable_overtake and not isPlayingOvertake and sessionTime < 1800000:
                 newposition = ac.getCarRealTimeLeaderboardPosition(0)
                 if position > newposition and overtake != 2:
@@ -378,10 +380,10 @@ def acUpdate(deltaT):
                     position = newposition
                     finish_time = time.perf_counter()
                     count_overtake += 1
-                if finish_time - start_time < 30:
-                    ac.log(log + "Epicness detected because 2 overtakes")
-                    overtake = 0
-                    playOvertake()
+                    if finish_time - start_time < 30:
+                        ac.log(log + "Epicness detected because 2 overtakes")
+                        overtake = 0
+                        playOvertake()
                 if overtake == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 1:
                     ac.log(log + "Epicness detected because you are 1st")
                     overtake = 0
@@ -407,9 +409,14 @@ def acUpdate(deltaT):
                 ac.log(log + "Win detected")
                 playAfterRace('win')
 
+        if status == 3:
+            stopPlaying()
+
     if overflow >= 20:
         stopPlaying()
-        ac.log(log + "BSOD avoided. THERE WAS AN OVERFOW")
+        ac.log(log + "BSOD avoided. THERE WAS AN OVERFLOW")
+        if status == 3:
+            stopPlaying()
 
 
 def CheckNewUpdate():
