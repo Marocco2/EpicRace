@@ -74,7 +74,6 @@ ctypes.windll[os.path.join(dllfolder, fmodex)]
 box_lib_folder = os.path.join(os.path.dirname(__file__), 'box_lib')
 sys.path.insert(0, box_lib_folder)
 
-
 try:
     import pyfmodex
 except Exception as e:
@@ -199,7 +198,6 @@ def github_newupdate(git_repo, branch='master', sha='', dir_path=''):
 from threading import Thread, Event
 
 
-# WORK IN PROGRESS
 class SoundPlayer(object):
     def __init__(self, filename, player):
         self.filename = filename
@@ -258,7 +256,7 @@ class SoundPlayer(object):
                 if state == False:
                     self._play_event.set()
             else:
-                ac.log('[Spotter]File not found : %s' % filename)
+                ac.log('BOX: File not found : %s' % filename)
 
     def _worker(self):
         while True:
@@ -280,5 +278,6 @@ class SoundPlayer(object):
                 self.queue.pop(0)
                 queue_len = len(self.queue)
             self._play_event.clear()
+
 
 FModSystem = pyfmodex.System()
