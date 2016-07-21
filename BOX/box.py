@@ -247,7 +247,7 @@ class SoundPlayer(object):
     def stop(self):
         try:
             self.channel.paused = 1
-            self.queue.pop(0)
+            #self.queue.pop(0)
         except:
             ac.log('BOX: stop() error ' + traceback.format_exc())
 
@@ -270,7 +270,7 @@ class SoundPlayer(object):
         leng = self.queue.__len__()
         return leng
 
-    @async
+
     def _worker(self):
         while True:
             self._play_event.wait()
