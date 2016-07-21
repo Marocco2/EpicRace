@@ -1,18 +1,15 @@
 # Sound player code by Rombik @ AC forums.
 # Sound player updates for fmod-ex by rafffel @ AC forums.
 
-import ac
-import acsys
-import os
-import sys
-import platform
 import configparser
-import shutil
-import codecs
-import traceback
+import os
+import platform
 import random
-import threading
+import sys
 import time
+import traceback
+
+import ac
 
 if platform.architecture()[0] == "64bit":
     sysdir = "stdlib64"
@@ -21,8 +18,6 @@ else:
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "box", sysdir))
 os.environ['PATH'] += ";."
-
-import ctypes
 
 importError = False
 
@@ -138,9 +133,7 @@ def playBeforeRace():
     isPlayingBeforeRace = True
     location = random.choice(before_race_tracks)
     location = os.path.join(audio_folder, location)
-    priority_queue(location, "isPlayingBeforeRace")
-
-
+    queue(location)
 
 
 def playStartRace():
@@ -151,14 +144,12 @@ def playStartRace():
     priority_queue(location, "isPlayingStartRace")
 
 
-
 def playSuspense():
     global audio_folder, suspense_tracks, isPlayingSuspense
     isPlayingSuspense = True
     location = random.choice(suspense_tracks)
     location = os.path.join(audio_folder, location)
     queue(location)
-
 
 
 def playAfterRace(win_or_lose):
@@ -193,7 +184,6 @@ def playOvertake():
         location = random.choice(epic_tracks)
         location = os.path.join(audio_folder, location)
         queue(location)
-
 
 
 def acMain(ac_version):
@@ -292,9 +282,9 @@ def acMain(ac_version):
     ac.setFontColor(LoseLabel, 1, 1, 1, 1)
     ac.setFontSize(LoseLabel, 15)
     #
-    labeldesc = ac.addLabel(appWindow, "Something is broken")
-    ac.setPosition(labeldesc, 180, 40)
-    ac.setSize(labeldesc, 200, 200)
+    # labeldesc = ac.addLabel(appWindow, "Something is broken")
+    # ac.setPosition(labeldesc, 180, 40)
+    # ac.setSize(labeldesc, 200, 200)
     #
     StatusLabel = ac.addLabel(appWindow, Status)
     ac.setPosition(StatusLabel, 10, 275)
@@ -309,15 +299,14 @@ def acMain(ac_version):
     # DEBUG INFO
     #
     debuglabel = ac.addLabel(appWindow, "")
-    ac.setPosition(debuglabel, 200, 150)
+    ac.setPosition(debuglabel, 215, 30)
     ac.setSize(debuglabel, 200, 200)
     #
     #
     #
     box.FModSystem.init()
-    sound_player = box.SoundPlayer(os.path.join(os.path.dirname(__file__), "SoundPacks\\Turnabout\\before_race_1.mp3"),
-                                   box.FModSystem)
-    sound_player.set_volume(audio_volume / 100.0)
+    sound_player = box.SoundPlayer(box.FModSystem)
+    sound_player.set_volume(audio_volume / 100)
     sound_player.set_gain(2.0)
 
     audiolist = os.listdir(os.path.join(os.path.dirname(__file__), "SoundPacks"))
@@ -345,7 +334,7 @@ def spinner_config(spinner, x, y, xl, yl, min, step, max, value, evt):
 def acUpdate(deltaT):
     global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps, log
     global audio, overtake, position, newposition, start_time, finish_time, count_overtake
-    global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow
+    global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
 
     status = info.graphics.status
@@ -354,6 +343,9 @@ def acUpdate(deltaT):
     # ac.log(log + "session time" + str(sessionTime))
     numberOfLaps = info.graphics.numberOfLaps
     completedLaps = info.graphics.completedLaps
+    lenqueue = sound_player.lenQueue()
+    #if lenqueue == 0:
+    #    isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
 
     ac.setText(debuglabel, "Session: " + repr(session) +
                "\nNumber of laps: " + repr(numberOfLaps) +
@@ -361,9 +353,15 @@ def acUpdate(deltaT):
                "\nOvertakes: " + repr(count_overtake) +
                "\nSession Time: " + repr(sessionTime) +
                "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
-               "\nOverflow: " + repr(overflow))
+               "\nLength queue: " + str(lenqueue) +
+               "\nisOvertaking: " + repr(overtake) +
+               "\nisPlayingStartRace: " + str(isPlayingStartRace) +
+               "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
+               "\nisPlayingSuspense: " + str(isPlayingSuspense) +
+               "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
+               "\nisPlayingOvertake: " + str(isPlayingOvertake))
 
-    if overflow < 20:
+    if overflow < 50:
         if session == 2:  # Race sessions
             # ac.log(log + "Race session")
             if enable_before_race and not isPlayingBeforeRace and sessionTime > 1860000:
@@ -371,7 +369,8 @@ def acUpdate(deltaT):
                 playBeforeRace()
             if enable_before_race and isPlayingBeforeRace and sessionTime <= 1860000:
                 stopPlaying()
-            if enable_overtake and not isPlayingOvertake and sessionTime < 1800000:
+            if enable_overtake and not isPlayingOvertake and sessionTime < 1800000 and (
+                        numberOfLaps - completedLaps) != 0:
                 newposition = ac.getCarRealTimeLeaderboardPosition(0)
                 if position > newposition and overtake != 2:
                     ac.log(log + "Overtake detected")
@@ -383,7 +382,7 @@ def acUpdate(deltaT):
                     ac.log(log + "Undertake detected")
                     position = newposition
                     start_time = time.perf_counter()
-                    overtake -= 1
+                    overtake = 0
                 if overtake == 2:
                     ac.log(log + "Overtake detected x2")
                     finish_time = time.perf_counter()
@@ -391,11 +390,13 @@ def acUpdate(deltaT):
                         ac.log(log + "Epicness detected because 2 overtakes")
                         overtake = 0
                         playOvertake()
-                if overtake == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 1:
+                if ac.getCarRealTimeLeaderboardPosition(0) == 0:
                     ac.log(log + "Epicness detected because you are 1st")
                     overtake = 0
                     playOvertake()
-            if enable_suspense and not isPlayingSuspense and (numberOfLaps - completedLaps) <= suspense_laps:
+
+            if enable_suspense and not isPlayingSuspense and (numberOfLaps - completedLaps) <= suspense_laps and (
+                        numberOfLaps - completedLaps) != 0:
                 ac.log(log + "Suspense detected")
                 playSuspense()
             if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == 0 and (
@@ -412,14 +413,11 @@ def acUpdate(deltaT):
             if enable_suspense and not isPlayingSuspense and sessionTime < 120000:
                 ac.log(log + "Suspense detected")
                 playSuspense()
-            if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == '1':
+            if enable_win and not isPlayingAfterRace and ac.getCarRealTimeLeaderboardPosition(0) == 0:
                 ac.log(log + "Win detected")
                 playAfterRace('win')
 
-        if status == 3:
-            stopPlaying()
-
-    if overflow >= 20:
+    if overflow >= 50:
         stopPlaying()
         ac.log(log + "BSOD avoided. THERE WAS AN OVERFLOW")
         if status == 3:
@@ -450,7 +448,7 @@ def getNotification():
 
 def setDescription(item, text):
     global labeldesc
-    ac.setText(labeldesc, text)
+    # ac.setText(labeldesc, text)
     setHighlight(item)
 
 
@@ -516,7 +514,7 @@ def onSoundPackChanged(x):
 def onVolumeChanged(value):
     global audio_volume, VolumeSpinner, sound_player
     audio_volume = int(ac.getValue(VolumeSpinner))
-    sound_player.set_volume(audio_volume / 100.0)
+    sound_player.set_volume(audio_volume / 100)
     config['Audio']['volume'] = str(audio_volume)
     setDescription(VolumeSpinner, '''
     Set the overall volume of

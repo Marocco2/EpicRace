@@ -199,8 +199,7 @@ from threading import Thread, Event
 
 
 class SoundPlayer(object):
-    def __init__(self, filename, player):
-        self.filename = filename
+    def __init__(self, player):
         self._play_event = Event()
         self.player = player
         self.playbackpos = [0.0, 0.0, 0.0]
@@ -243,21 +242,33 @@ class SoundPlayer(object):
             volume = gain
             self.speaker_mix = [volume, volume, volume, 1.0, volume, volume, volume, volume]
 
+
     def stop(self):
-        while self.queue:
-            self.queue.pop()
+        try:
+            while self.queue:
+                self.channel.paused.setter(True)
+                self.queue.clear()
+        except:
+            ac.log('BOX: stop() error ' + traceback.format_exc())
 
     @async
     def queueSong(self, filename=None):
-        if filename is not None:
-            if os.path.isfile(filename):
-                sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
-                self.queue.append({'sound': sound, 'mode': self.sound_mode})
-                state = self._play_event.is_set()
-                if state == False:
-                    self._play_event.set()
-            else:
-                ac.log('BOX: File not found : %s' % filename)
+        try:
+            if filename is not None:
+                if os.path.isfile(filename):
+                    sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
+                    self.queue.append({'sound': sound, 'mode': self.sound_mode})
+                    state = self._play_event.is_set()
+                    if state == False:
+                        self._play_event.set()
+                else:
+                    ac.log('BOX: File not found : %s' % filename)
+        except:
+            ac.log('BOX: queueSong() error ' + traceback.format_exc())
+
+    def lenQueue(self):
+        leng = self.queue.__len__()
+        return leng
 
     def _worker(self):
         while True:
