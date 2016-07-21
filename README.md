@@ -1,5 +1,5 @@
 # Epic Race
-### Have you ever wish to play a soundtrack if you have overtaked the leader of the race? 
+### Have you ever wish to play a soundtrack if you have overtook the leader of the race? 
 ##NO?
 # YOU'RE KIDDING ME!
 Just download and enable this app. It plays music if:
