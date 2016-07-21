@@ -130,31 +130,30 @@ def stopPlaying(isPlaying="all"):
 
 def playBeforeRace():
     global audio_folder, before_race_tracks, isPlayingBeforeRace
-    isPlayingBeforeRace = True
     location = random.choice(before_race_tracks)
     location = os.path.join(audio_folder, location)
     queue(location)
+    isPlayingBeforeRace = True
 
 
 def playStartRace():
     global audio_folder, start_race_tracks, isPlayingStartRace
-    isPlayingStartRace = True
     location = random.choice(start_race_tracks)
     location = os.path.join(audio_folder, location)
     priority_queue(location, "isPlayingStartRace")
+    isPlayingStartRace = True
 
 
 def playSuspense():
     global audio_folder, suspense_tracks, isPlayingSuspense
-    isPlayingSuspense = True
     location = random.choice(suspense_tracks)
     location = os.path.join(audio_folder, location)
     queue(location)
+    isPlayingSuspense = True
 
 
 def playAfterRace(win_or_lose):
     global audio_folder, win_tracks, isPlayingAfterRace, count_overtake, win_with_sweat_tracks, lose_tracks, overtake
-    isPlayingAfterRace = True
     if win_or_lose == "win" and count_overtake < 7:
         location = random.choice(win_tracks)
         location = os.path.join(audio_folder, location)
@@ -169,13 +168,13 @@ def playAfterRace(win_or_lose):
         location = random.choice(lose_tracks)
         location = os.path.join(audio_folder, location)
         priority_queue(location, "isPlayingAfterRace")
+    isPlayingAfterRace = True
     count_overtake = 0
     overtake = 0
 
 
 def playOvertake():
     global audio_folder, epic_tracks, surprise_tracks, isPlayingSuspense, isPlayingOvertake
-    isPlayingOvertake = True
     if isPlayingSuspense:
         location = random.choice(surprise_tracks)
         location = os.path.join(audio_folder, location)
@@ -184,6 +183,7 @@ def playOvertake():
         location = random.choice(epic_tracks)
         location = os.path.join(audio_folder, location)
         queue(location)
+    isPlayingOvertake = True
 
 
 def acMain(ac_version):
@@ -344,8 +344,8 @@ def acUpdate(deltaT):
     numberOfLaps = info.graphics.numberOfLaps
     completedLaps = info.graphics.completedLaps
     lenqueue = sound_player.lenQueue()
-    #if lenqueue == 0:
-    #    isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
+    if lenqueue == 0 and not (isPlayingStartRace or isPlayingBeforeRace or isPlayingSuspense or isPlayingAfterRace or isPlayingOvertake):
+        isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
 
     ac.setText(debuglabel, "Session: " + repr(session) +
                "\nNumber of laps: " + repr(numberOfLaps) +

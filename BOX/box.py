@@ -243,11 +243,11 @@ class SoundPlayer(object):
             self.speaker_mix = [volume, volume, volume, 1.0, volume, volume, volume, volume]
 
 
+    @async
     def stop(self):
         try:
-            while self.queue:
-                self.channel.paused.setter(True)
-                self.queue.clear()
+            self.channel.paused = 1
+            self.queue.pop(0)
         except:
             ac.log('BOX: stop() error ' + traceback.format_exc())
 
@@ -270,6 +270,7 @@ class SoundPlayer(object):
         leng = self.queue.__len__()
         return leng
 
+    @async
     def _worker(self):
         while True:
             self._play_event.wait()
@@ -284,7 +285,7 @@ class SoundPlayer(object):
                     self.channel.spectrum_mix = self.speaker_mix
                 self.channel.volume = self.playbackvol
                 self.player.update()
-                while self.channel.is_playing == 1:
+                while self.channel.paused == 0:
                     time.sleep(0.1)
                 self.queue[0]['sound'].release()
                 self.queue.pop(0)
