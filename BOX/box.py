@@ -261,6 +261,7 @@ class SoundPlayer(object):
                     state = self._play_event.is_set()
                     if state == False:
                         self._play_event.set()
+                    return 1  # mp3 loaded
                 else:
                     ac.log('BOX: File not found : %s' % filename)
         except:
@@ -280,7 +281,7 @@ class SoundPlayer(object):
                 self.channel.spectrum_mix = self.speaker_mix
                 self.channel.volume = self.playbackvol
                 self.player.update()
-                while self.channel.paused == 0:
+                while self.channel.paused == 0 and self.channel.is_playing == 1:
                     time.sleep(0.1)
                 self.queue[0]['sound'].release()
                 self.queue.pop(0)
