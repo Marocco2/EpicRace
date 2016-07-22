@@ -206,7 +206,7 @@ class SoundPlayer(object):
         self.playbackvol = 1.0
         self.EQ = []
         self.initEq()
-        self.sound_mode = pyfmodex.constants.FMOD_2D
+        self.sound_mode = pyfmodex.constants.FMOD_CREATECOMPRESSEDSAMPLE
         self.speaker_mix = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         for i in self.EQ:
             self.player.add_dsp(i)
@@ -277,12 +277,7 @@ class SoundPlayer(object):
             queue_len = len(self.queue)
             while queue_len > 0:
                 self.player.play_sound(self.queue[0]['sound'], False, 0)
-                if self.sound_mode == pyfmodex.constants.FMOD_3D and self.queue[0][
-                    'mode'] == pyfmodex.constants.FMOD_3D:
-                    self.channel.position = self.playbackpos
-                elif self.sound_mode == pyfmodex.constants.FMOD_2D and self.queue[0][
-                    'mode'] == pyfmodex.constants.FMOD_2D:
-                    self.channel.spectrum_mix = self.speaker_mix
+                self.channel.spectrum_mix = self.speaker_mix
                 self.channel.volume = self.playbackvol
                 self.player.update()
                 while self.channel.paused == 0:
