@@ -419,15 +419,14 @@ def acUpdate(deltaT):
                 ac.log(log + "Suspense detected")
                 sus_once = True
                 playSuspense()
-            if enable_win and not isPlayingAfterRace and not ar_once and ac.getCarRealTimeLeaderboardPosition(
+            if enable_win and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(
                     0) == 0 and (
                         numberOfLaps - completedLaps) == 0:
                 ac.log(log + "Win detected")
                 ar_once = True
                 playAfterRace('win')
-            if enable_lose and not isPlayingAfterRace and not ar_once and ac.getCarRealTimeLeaderboardPosition(
-                    0) != 0 and ((
-                                             numberOfLaps - completedLaps) == 0):
+            if enable_lose and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(
+                    0) != 0 and (numberOfLaps - completedLaps) == 0:
                 ac.log(log + "Lose detected")
                 ar_once = True
                 playAfterRace('lose')
