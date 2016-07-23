@@ -160,12 +160,12 @@ def playSuspense():
 def playAfterRace(win_or_lose):
     global audio_folder, win_tracks, isPlayingAfterRace, count_overtake, win_with_sweat_tracks, lose_tracks, overtake
     global ar_once
-    if win_or_lose == "win" and count_overtake < 7:
+    if win_or_lose == "win" and count_overtake < 5:
         location = random.choice(win_tracks)
         location = os.path.join(audio_folder, location)
         priority_queue(location, "isPlayingAfterRace")
 
-    if win_or_lose == "win" and count_overtake >= 7:
+    if win_or_lose == "win" and count_overtake >= 5:
         location = random.choice(win_with_sweat_tracks)
         location = os.path.join(audio_folder, location)
         priority_queue(location, "isPlayingAfterRace")
