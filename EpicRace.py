@@ -43,6 +43,7 @@ uihighlight = -1
 AppInitialised = False
 branch = config['SETTINGS']['branch']
 AutoUpdate = config.getboolean('SETTINGS', 'AUTOUPDATE')
+debug = config.getboolean('SETTINGS', 'debug')
 
 audio = config['Audio']['source']
 audio_volume = int(config['Audio']['volume'])
@@ -57,7 +58,7 @@ enable_lose = config.getboolean('Lose', 'active')
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
-session = sessionTime = numberOfLaps = completedLaps = overflow = wait = 0
+session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
 ar_once = ov_once = sus_once = sr_once = br_once = False
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
@@ -205,7 +206,7 @@ def acMain(ac_version):
     global session, sessionTime, numberOfLaps, completedLaps
 
     appWindow = ac.newApp("Epic Race")
-    ac.setSize(appWindow, 430, 320)
+    ac.setSize(appWindow, 430, 330)
     ac.setTitle(appWindow, "Epic Race")
     ac.setBackgroundOpacity(appWindow, 0.5)
     ac.drawBorder(appWindow, 0)
@@ -300,9 +301,10 @@ def acMain(ac_version):
     ac.setFontSize(StatusLabel, 15)
     #
     NotificationLabel = ac.addLabel(appWindow, Notify)
-    ac.setPosition(NotificationLabel, 10, 305)
+    ac.setPosition(NotificationLabel, 10, 295)
     ac.setFontColor(NotificationLabel, 1, 1, 1, 1)
     ac.setFontSize(NotificationLabel, 12)
+    ac.setSize(NotificationLabel, 24, 310)
     #
     # DEBUG INFO
     #
@@ -344,7 +346,7 @@ def acUpdate(deltaT):
     global audio, overtake, position, newposition, start_time, finish_time, count_overtake
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
-    global ar_once, ov_once, sus_once, sr_once, br_once, wait
+    global ar_once, ov_once, sus_once, sr_once, br_once, wait_a, debug
 
     status = info.graphics.status
     session = info.graphics.session
@@ -356,25 +358,28 @@ def acUpdate(deltaT):
 
     if sessionTime <= 0 and lenqueue == 0 and (
                             isPlayingStartRace or isPlayingBeforeRace or isPlayingSuspense or isPlayingAfterRace or isPlayingOvertake):
-        wait += 1
-        if lenqueue == 0 and wait == 100:
+        wait_a += 1
+        if lenqueue == 0 and wait_a == 100:
             isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
             ac.log(log + "lenqueue reset")
-            wait = 0
-    #
-    #ac.setText(debuglabel, "Session: " + repr(session) +
-    #           "\nNumber of laps: " + repr(numberOfLaps) +
-    #           "\nCompleted Laps: " + repr(completedLaps) +
-    #           "\nOvertakes: " + repr(count_overtake) +
-    #           "\nSession Time: " + repr(sessionTime) +
-    #           "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
-    #           "\nLength queue: " + str(lenqueue) +
-    #           "\nisOvertaking: " + repr(overtake) +
-    #           "\nisPlayingStartRace: " + str(isPlayingStartRace) +
-    #           "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
-    #           "\nisPlayingSuspense: " + str(isPlayingSuspense) +
-    #           "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
-    #           "\nisPlayingOvertake: " + str(isPlayingOvertake))
+            wait_a = 0
+
+    # DEBUG INFOS
+    if debug:
+        ac.setText(labeldesc, "")
+        ac.setText(debuglabel, "Session: " + repr(session) +
+                   "\nNumber of laps: " + repr(numberOfLaps) +
+                   "\nCompleted Laps: " + repr(completedLaps) +
+                   "\nOvertakes: " + repr(count_overtake) +
+                   "\nSession Time: " + repr(sessionTime) +
+                   "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
+                   "\nLength queue: " + str(lenqueue) +
+                   "\nisOvertaking: " + repr(overtake) +
+                   "\nisPlayingStartRace: " + str(isPlayingStartRace) +
+                   "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
+                   "\nisPlayingSuspense: " + str(isPlayingSuspense) +
+                   "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
+                   "\nisPlayingOvertake: " + str(isPlayingOvertake))
 
     if overflow < 50:
         if session == 2:  # Race sessions

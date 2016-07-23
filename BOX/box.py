@@ -90,10 +90,10 @@ except Exception as e:
 # A useful push notification via Telegram if I need send some news
 def notification(telegram_bot_oauth):
     try:
-        telegram_api_url = "http://api.telegram.org/bot" + telegram_bot_oauth + "/getUpdates"
+        telegram_api_url = "https://api.telegram.org/bot" + telegram_bot_oauth + "/getUpdates"
         r = requests.get(telegram_api_url)
         message = r.json()
-        if message["ok"] == "true":
+        if message["ok"]:
             var_notify = message["result"][-1]["message"]["text"]
             ac.log('BOX: Notification from Telegram: ' + var_notify)
             return var_notify
@@ -242,12 +242,11 @@ class SoundPlayer(object):
             volume = gain
             self.speaker_mix = [volume, volume, volume, 1.0, volume, volume, volume, volume]
 
-
     @async
     def stop(self):
         try:
             self.channel.paused = 1
-            #self.queue.pop(0)
+            # self.queue.pop(0)
         except:
             ac.log('BOX: stop() error ' + traceback.format_exc())
 
@@ -270,7 +269,6 @@ class SoundPlayer(object):
     def lenQueue(self):
         leng = self.queue.__len__()
         return leng
-
 
     def _worker(self):
         while True:
