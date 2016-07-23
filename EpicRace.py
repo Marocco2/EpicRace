@@ -44,6 +44,7 @@ AppInitialised = False
 branch = config['SETTINGS']['branch']
 AutoUpdate = config.getboolean('SETTINGS', 'AUTOUPDATE')
 debug = config.getboolean('SETTINGS', 'debug')
+leader = config.getboolean('Overtake', 'loop leader')
 
 audio = config['Audio']['source']
 audio_volume = int(config['Audio']['volume'])
@@ -346,7 +347,7 @@ def acUpdate(deltaT):
     global audio, overtake, position, newposition, start_time, finish_time, count_overtake
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
-    global ar_once, ov_once, sus_once, sr_once, br_once, wait_a, debug
+    global ar_once, ov_once, sus_once, sr_once, br_once, wait_a, debug, leader
 
     status = info.graphics.status
     session = info.graphics.session
@@ -399,6 +400,11 @@ def acUpdate(deltaT):
                     start_time = time.perf_counter()
                     overtake += 1
                     count_overtake += 1
+                    if leader == 0 and ac.getCarRealTimeLeaderboardPosition(0) == 0:
+                        ac.log(log + "Epicness detected because you are 1st")
+                        overtake = 0
+                        ov_once = True
+                        playOvertake()
                 if position < newposition:
                     ac.log(log + "Undertake detected")
                     position = newposition
@@ -412,8 +418,8 @@ def acUpdate(deltaT):
                         overtake = 0
                         playOvertake()
                         ov_once = True
-                if ac.getCarRealTimeLeaderboardPosition(0) == 0:
-                    ac.log(log + "Epicness detected because you are 1st")
+                if leader == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 0:
+                    ac.log(log + "Epicness detected because you are 1st (loop)")
                     overtake = 0
                     ov_once = True
                     playOvertake()
