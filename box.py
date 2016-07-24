@@ -74,7 +74,6 @@ ctypes.windll[os.path.join(dllfolder, fmodex)]
 box_lib_folder = os.path.join(os.path.dirname(__file__), 'box_lib')
 sys.path.insert(0, box_lib_folder)
 
-
 try:
     import pyfmodex
 except Exception as e:
@@ -91,10 +90,10 @@ except Exception as e:
 # A useful push notification via Telegram if I need send some news
 def notification(telegram_bot_oauth):
     try:
-        telegram_api_url = "http://api.telegram.org/bot" + telegram_bot_oauth + "/getUpdates"
+        telegram_api_url = "https://api.telegram.org/bot" + telegram_bot_oauth + "/getUpdates"
         r = requests.get(telegram_api_url)
         message = r.json()
-        if message["ok"] == "true":
+        if message["ok"]:
             var_notify = message["result"][-1]["message"]["text"]
             ac.log('BOX: Notification from Telegram: ' + var_notify)
             return var_notify
@@ -108,7 +107,7 @@ def notification(telegram_bot_oauth):
 
 
 # It downloads a zip file and extract it in a folder
-def get_zipfile(download_link, dir_path=''):
+def get_zipfile(download_link, dir_path='', absolute_path=False):
     try:
         local_filename = download_link.split('/')[-1]
         # NOTE the stream=True parameter
@@ -125,8 +124,10 @@ def get_zipfile(download_link, dir_path=''):
         ac.log("BOX: " + where_is_zip)
         try:
             with zipfile.ZipFile(local_filename, "r") as z:
-                if dir_path == "":
+                if dir_path == "" and not absolute_path:
                     z.extractall(os.path.dirname(__file__))  # Extracting files
+                elif absolute_path:
+                    z.extractall(dir_path)  # Extracting files
                 else:
                     z.extractall(os.path.join(os.path.dirname(__file__), dir_path))  # Extracting files
             # os.remove(local_filename)
@@ -170,7 +171,7 @@ def github_newupdate(git_repo, branch='master', sha='', dir_path=''):
         r = requests.get(check_link, headers=headers)
         if sha == "":
             try:
-                with open('sha.txt', 'r') as g:
+                with open("apps\\python\\" + git_repo.split('/')[-1] + "\sha.txt", 'r') as g:
                     sha = g.read()
                     g.close()
             except:
@@ -197,17 +198,15 @@ def github_newupdate(git_repo, branch='master', sha='', dir_path=''):
 from threading import Thread, Event
 
 
-# WORK IN PROGRESS
 class SoundPlayer(object):
-    def __init__(self, filename, player):
-        self.filename = filename
+    def __init__(self, player):
         self._play_event = Event()
         self.player = player
         self.playbackpos = [0.0, 0.0, 0.0]
         self.playbackvol = 1.0
         self.EQ = []
         self.initEq()
-        self.sound_mode = pyfmodex.constants.FMOD_2D
+        self.sound_mode = pyfmodex.constants.FMOD_CREATECOMPRESSEDSAMPLE
         self.speaker_mix = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         for i in self.EQ:
             self.player.add_dsp(i)
@@ -243,20 +242,33 @@ class SoundPlayer(object):
             volume = gain
             self.speaker_mix = [volume, volume, volume, 1.0, volume, volume, volume, volume]
 
+    @async
     def stop(self):
-        while self.queue:
-            self.queue.pop()
+        try:
+            self.channel.paused = 1
+            # self.queue.pop(0)
+        except:
+            ac.log('BOX: stop() error ' + traceback.format_exc())
 
+    @async
     def queueSong(self, filename=None):
-        if filename is not None:
-            if os.path.isfile(filename):
-                sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
-                self.queue.append({'sound': sound, 'mode': self.sound_mode})
-                state = self._play_event.is_set()
-                if state == False:
-                    self._play_event.set()
-            else:
-                ac.log('[Spotter]File not found : %s' % filename)
+        try:
+            if filename is not None:
+                if os.path.isfile(filename):
+                    sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
+                    self.queue.append({'sound': sound, 'mode': self.sound_mode})
+                    state = self._play_event.is_set()
+                    if state == False:
+                        self._play_event.set()
+                    return 1  # mp3 loaded
+                else:
+                    ac.log('BOX: File not found : %s' % filename)
+        except:
+            ac.log('BOX: queueSong() error ' + traceback.format_exc())
+
+    def lenQueue(self):
+        leng = self.queue.__len__()
+        return leng
 
     def _worker(self):
         while True:
@@ -264,17 +276,15 @@ class SoundPlayer(object):
             queue_len = len(self.queue)
             while queue_len > 0:
                 self.player.play_sound(self.queue[0]['sound'], False, 0)
-                if self.sound_mode == pyfmodex.constants.FMOD_3D and self.queue[0][
-                    'mode'] == pyfmodex.constants.FMOD_3D:
-                    self.channel.position = self.playbackpos
-                elif self.sound_mode == pyfmodex.constants.FMOD_2D and self.queue[0][
-                    'mode'] == pyfmodex.constants.FMOD_2D:
-                    self.channel.spectrum_mix = self.speaker_mix
+                self.channel.spectrum_mix = self.speaker_mix
                 self.channel.volume = self.playbackvol
                 self.player.update()
-                while self.channel.is_playing == 1:
+                while self.channel.paused == 0 and self.channel.is_playing == 1:
                     time.sleep(0.1)
                 self.queue[0]['sound'].release()
                 self.queue.pop(0)
                 queue_len = len(self.queue)
             self._play_event.clear()
+
+
+FModSystem = pyfmodex.System()

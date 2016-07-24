@@ -27,8 +27,7 @@ WBR, Rombik :)
 import mmap
 import functools
 import ctypes
-from ctypes import c_int32, c_float, c_wchar
-
+from ctypes import c_int32, c_float, c_wchar, c_bool
 
 AC_STATUS = c_int32
 AC_OFF = 0
@@ -44,6 +43,14 @@ AC_HOTLAP = 3
 AC_TIME_ATTACK = 4
 AC_DRIFT = 5
 AC_DRAG = 6
+AC_FLAG_TYPE = c_int32
+AC_NO_FLAG = 0
+AC_BLUE_FLAG = 1
+AC_YELLOW_FLAG = 2
+AC_BLACK_FLAG = 3
+AC_WHITE_FLAG = 4
+AC_CHECKERED_FLAG = 5
+AC_PENALTY_FLAG = 6
 
 
 class SPageFilePhysics(ctypes.Structure):
@@ -78,6 +85,28 @@ class SPageFilePhysics(ctypes.Structure):
         ('numberOfTyresOut', c_int32),
         ('pitLimiterOn', c_int32),
         ('abs', c_float),
+        ('kersCharge', c_float),
+        ('kersInput', c_float),
+        ('autoShifterOn', c_int32),
+        ('rideHeight', c_float * 2),
+        ('turboBoost', c_float),
+        ('ballast', c_float),
+        ('airDensity', c_float),
+        ('airTemp', c_float),
+        ('roadTemp', c_float),
+
+        ('localAngularVel', c_float * 3),
+        ('finalFF', c_float),
+        ('performanceMeter', c_float),
+        ('engineBrake', c_int32),
+        ('ersRecoveryLevel', c_int32),
+        ('ersPowerLevel', c_int32),
+        ('ersHeatCharging', c_int32),
+        ('ersIsCharging', c_int32),
+        ('kersCurrentKJ', c_float),
+        ('drsAvailable', c_int32),
+        ('drsEnabled', c_int32),
+        ('brakeTemp', c_float * 4),
     ]
 
 
@@ -107,6 +136,12 @@ class SPageFileGraphic(ctypes.Structure):
         ('replayTimeMultiplier', c_float),
         ('normalizedCarPosition', c_float),
         ('carCoordinates', c_float * 3),
+        ('penaltyTime', c_float),
+        ('flag', AC_FLAG_TYPE),
+        ('idealLineOn', c_int32),
+        ('isInPitLane', c_int32),
+        ('surfaceGrip', c_float),
+
     ]
 
 
@@ -132,6 +167,27 @@ class SPageFileStatic(ctypes.Structure):
         ('maxFuel', c_float),
         ('suspensionMaxTravel', c_float * 4),
         ('tyreRadius', c_float * 4),
+        ('maxTurboBoost', c_float),
+
+        ('airTemp_deprecated', c_float),
+        ('roadTemp_deprecated', c_float),
+
+        ('penaltiesEnabled', c_int32),
+
+        ('aidFuelRate', c_float),
+        ('aidTireRate', c_float),
+        ('aidMechanicalDamage', c_float),
+        ('aidAllowTyreBlankets', c_int32),
+        ('aidStability', c_float),
+        ('aidAutoClutch', c_int32),
+        ('aidAutoBlib', c_int32),
+
+        ('hasDRS', c_int32),
+        ('hasERS', c_int32),
+        ('hasKERS', c_int32),
+        ('kersMaxJ', c_float),
+        ('engineBrakeSettingsCount', c_int32),
+        ('ersPowerControllerCount', c_int32),
     ]
 
 
