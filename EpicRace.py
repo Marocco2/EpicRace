@@ -375,7 +375,7 @@ def acUpdate(deltaT):
                    "\nSession Time: " + repr(sessionTime) +
                    "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
                    "\nLength queue: " + str(lenqueue) +
-                   "\nisOvertaking: " + repr(overtake) +
+                   "\nLead position: " + repr(ac.getCarLeaderboardPosition(0)) +
                    "\nisPlayingStartRace: " + str(isPlayingStartRace) +
                    "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
                    "\nisPlayingSuspense: " + str(isPlayingSuspense) +
@@ -431,13 +431,13 @@ def acUpdate(deltaT):
                 sus_once = True
                 playSuspense()
             if enable_win and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(
-                    0) == 0 and (
+                    0) == 1 and (
                         numberOfLaps - completedLaps) == 0:
                 ac.log(log + "Win detected")
                 ar_once = True
                 playAfterRace('win')
             if enable_lose and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(
-                    0) != 0 and (numberOfLaps - completedLaps) == 0:
+                    0) != 1 and (numberOfLaps - completedLaps) == 0:
                 ac.log(log + "Lose detected")
                 ar_once = True
                 playAfterRace('lose')
@@ -448,7 +448,7 @@ def acUpdate(deltaT):
                 ac.log(log + "Suspense detected")
                 sus_once = True
                 playSuspense()
-            if enable_win and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(0) == 0:
+            if enable_win and not isPlayingAfterRace and not ar_once and ac.getCarLeaderboardPosition(0) == 1:
                 ac.log(log + "Win detected")
                 ar_once = True
                 playAfterRace('win')
