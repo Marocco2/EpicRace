@@ -53,6 +53,7 @@ suspense_laps = int(config['Suspense']['laps'])
 enable_before_race = config.getboolean('Before Race', 'active')
 enable_overtake = config.getboolean('Overtake', 'active')
 enable_suspense = config.getboolean('Suspense', 'active')
+enable_hotlap = config.getboolean('Hotlap', 'active')
 enable_win = config.getboolean('Victory', 'active')
 enable_lose = config.getboolean('Lose', 'active')
 
@@ -60,7 +61,9 @@ appWindow = sound_player = SoundPackSpinner = VolumeSpinner = Beforerace = Overt
 labeldesc = StatusLabel = NotificationLabel = audiolist = BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
 session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
-ar_once = ov_once = sus_once = sr_once = br_once = False
+ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
+
+lastlap = bestlap = 0
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = win_tracks = win_with_sweat_tracks = start_race_tracks = \
     start_time = finish_time = position = newposition = overtake = count_overtake = suspense_tracks = surprise_tracks = 0
@@ -177,6 +180,7 @@ def playAfterRace(win_or_lose):
         priority_queue(location, "isPlayingAfterRace")
     isPlayingAfterRace = True
     ar_once = False
+    hot_once = False
     count_overtake = 0
     overtake = 0
 
@@ -343,8 +347,8 @@ def spinner_config(spinner, x, y, xl, yl, min, step, max, value, evt):
 
 
 def acUpdate(deltaT):
-    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, suspense_laps, log
-    global audio, overtake, position, newposition, start_time, finish_time, count_overtake
+    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_suspense, enable_hotlap, suspense_laps, log
+    global audio, overtake, position, newposition, start_time, finish_time, count_overtake, bestlap, lastlap, hot_once
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
     global ar_once, ov_once, sus_once, sr_once, br_once, wait_a, debug, leader
@@ -356,6 +360,8 @@ def acUpdate(deltaT):
     numberOfLaps = info.graphics.numberOfLaps
     completedLaps = info.graphics.completedLaps
     lenqueue = sound_player.lenQueue()
+    lastlap = info.graphics.lastTime
+    bestlap = info.graphics.bestTime
 
     if sessionTime <= 0 and lenqueue == 0 and (
                             isPlayingStartRace or isPlayingBeforeRace or isPlayingSuspense or isPlayingAfterRace or isPlayingOvertake):
@@ -394,12 +400,20 @@ def acUpdate(deltaT):
             if enable_overtake and not isPlayingOvertake and not ov_once and sessionTime < 0 and (
                         numberOfLaps - completedLaps) != 0:
                 newposition = ac.getCarRealTimeLeaderboardPosition(0)
-                if position > newposition and overtake != 2:
+                if position > newposition:
                     ac.log(log + "Overtake detected")
                     position = newposition
                     start_time = time.perf_counter()
                     overtake += 1
                     count_overtake += 1
+                    if overtake == 2:
+                        ac.log(log + "Overtake detected x2")
+                        finish_time = time.perf_counter()
+                        if finish_time - start_time < 30:
+                            ac.log(log + "Epicness detected because 2 overtakes")
+                            overtake = 0
+                            playOvertake()
+                            ov_once = True
                     if leader == 0 and ac.getCarRealTimeLeaderboardPosition(0) == 0:
                         ac.log(log + "Epicness detected because you are 1st")
                         overtake = 0
@@ -410,14 +424,6 @@ def acUpdate(deltaT):
                     position = newposition
                     start_time = time.perf_counter()
                     overtake = 0
-                if overtake == 2:
-                    ac.log(log + "Overtake detected x2")
-                    finish_time = time.perf_counter()
-                    if finish_time - start_time < 30:
-                        ac.log(log + "Epicness detected because 2 overtakes")
-                        overtake = 0
-                        playOvertake()
-                        ov_once = True
                 if leader == 1 and ac.getCarRealTimeLeaderboardPosition(0) == 0:
                     ac.log(log + "Epicness detected because you are 1st (loop)")
                     overtake = 0
@@ -452,6 +458,13 @@ def acUpdate(deltaT):
                 ac.log(log + "Win detected")
                 ar_once = True
                 playAfterRace('win')
+
+        if session == 3: # Hotlap session
+            if enable_hotlap:
+                if lastlap == bestlap and lastlap != 0 and not hot_once and not isPlayingAfterRace:
+                    hot_once = True
+                    playAfterRace('win')
+
 
     if overflow >= 50:
         stopPlaying()
