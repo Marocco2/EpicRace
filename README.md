@@ -1,5 +1,5 @@
 ### Have you ever wish to play a soundtrack if you have overtaken the leader of the race? 
-##NO?
+## NO?
 # YOU'RE KIDDING ME!
 Just download and enable EPIC Race. It plays music if:
 
@@ -9,6 +9,6 @@ Just download and enable EPIC Race. It plays music if:
 - you overtake 2 cars in 30 seconds
 - it's your final lap
 
-###Plus, you can personalize your SoundPack! Create a new subdirectory in SoundPacks and put your favorite songs!
+### Plus, you can personalize your SoundPack! Create a new subdirectory in SoundPacks and put your favorite songs!
 
-##Download NOW on RaceDepartment.com
+## Download NOW on RaceDepartment.com
