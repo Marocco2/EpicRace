@@ -58,9 +58,9 @@ enable_win = config.getboolean('Victory', 'active')
 enable_lose = config.getboolean('Lose', 'active')
 
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = \
- Beforerace = Overtake = Suspense = Win = Lose = ""
+    Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = \
- BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
+    BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = LoseLabel = audiolabel = ""
 session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
 ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
@@ -68,13 +68,13 @@ ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
 lastlap = bestlap = 0
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = \
- win_tracks = win_with_sweat_tracks = start_race_tracks = \
+    win_tracks = win_with_sweat_tracks = start_race_tracks = \
     start_time = finish_time = position = newposition = overtake = \
-     iovertake = done = count_overtake = suspense_tracks = surprise_tracks = 0
+    iovertake = done = count_overtake = suspense_tracks = surprise_tracks = 0
 lose_tracks = 0
 
 isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
- isPlayingAfterRace = isPlayingOvertake = isPlayingHotlap = False
+    isPlayingAfterRace = isPlayingOvertake = isPlayingHotlap = False
 
 
 def initSoundPack(audio_source):
@@ -227,7 +227,7 @@ def acMain(ac_version):
     global session, sessionTime, numberOfLaps, completedLaps
 
     appWindow = ac.newApp("Epic Race")
-    ac.setSize(appWindow, 430, 330)
+    ac.setSize(appWindow, 430, 350)
     ac.setTitle(appWindow, "Epic Race")
     ac.setBackgroundOpacity(appWindow, 0.5)
     ac.drawBorder(appWindow, 0)
@@ -329,12 +329,12 @@ def acMain(ac_version):
     ac.setSize(labeldesc, 200, 200)
     #
     StatusLabel = ac.addLabel(appWindow, Status)
-    ac.setPosition(StatusLabel, 10, 275)
+    ac.setPosition(StatusLabel, 10, 305)
     ac.setFontColor(StatusLabel, 1, 1, 1, 1)
     ac.setFontSize(StatusLabel, 15)
     #
     NotificationLabel = ac.addLabel(appWindow, Notify)
-    ac.setPosition(NotificationLabel, 10, 295)
+    ac.setPosition(NotificationLabel, 10, 325)
     ac.setFontColor(NotificationLabel, 1, 1, 1, 1)
     ac.setFontSize(NotificationLabel, 12)
     ac.setSize(NotificationLabel, 24, 310)
@@ -394,17 +394,17 @@ def acUpdate(deltaT):
     lastlap = info.graphics.lastTime
     bestlap = info.graphics.bestTime
 
-    if sessionTime <= 0 and lenqueue == 0 and (
-                            isPlayingStartRace or
-                            isPlayingBeforeRace or
+    if ((sessionTime <= 0 and session <= 2) or session == 3) and lenqueue == 0 and (
+                                isPlayingStartRace or
+                                isPlayingBeforeRace or
                             isPlayingSuspense or
-                            isPlayingAfterRace or
-                            isPlayingOvertake or
-                            isPlayingHotlap):
+                        isPlayingAfterRace or
+                    isPlayingOvertake or
+                isPlayingHotlap):
         wait_a += 1
         if lenqueue == 0 and wait_a == 100:
             isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
-             isPlayingAfterRace = isPlayingHotlap = isPlayingOvertake = False
+                isPlayingAfterRace = isPlayingHotlap = isPlayingOvertake = False
             ac.log(log + "lenqueue reset")
             wait_a = 0
 
@@ -416,6 +416,8 @@ def acUpdate(deltaT):
                    "\nCompleted Laps: " + repr(completedLaps) +
                    "\nOvertakes: " + repr(count_overtake) +
                    "\nSession Time: " + repr(sessionTime) +
+                   "\nLast lap: " + repr(lastlap) +
+                   "\nBest lap: " + repr(bestlap) +
                    "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
                    "\nLength queue: " + str(lenqueue) +
                    "\nLead position: " + repr(ac.getCarLeaderboardPosition(0)) +
@@ -520,19 +522,17 @@ def acUpdate(deltaT):
                     ar_once = True
                     playAfterRace('win')
 
-            if session == 3: # Hotlap session
+            if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lastlap != 0 and not hot_once and not isPlayingHotlap:
+                    if lastlap == bestlap and lastlap != "-:--:---" and not hot_once and not isPlayingHotlap:
                         ac.log(log + "Hotlap detected")
                         hot_once = True
                         playHotlap()
 
-
     if overflow >= 50:
         stopPlaying()
         ac.log(log + "BSOD avoided. THERE WAS AN OVERFLOW")
-        if status == 3:
-            stopPlaying()
+        exit()
 
 
 # TODO: Make it work
