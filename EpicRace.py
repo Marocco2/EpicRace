@@ -429,6 +429,10 @@ def acUpdate(deltaT):
                    "\nisPlayingOvertake: " + str(isPlayingOvertake))
 
     if overflow < 50:
+
+        #DEBUG ONLY
+        #overflow += 1
+
         if status == 2:
             if session == 2:  # Race sessions
                 # ac.log(log + "Race session")
@@ -524,7 +528,7 @@ def acUpdate(deltaT):
 
             if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lastlap != "-:--:---" and not hot_once and not isPlayingHotlap:
+                    if lastlap == bestlap and lastlap != "-:--:---" and numberOfLaps > 2 and not hot_once and not isPlayingHotlap:
                         ac.log(log + "Hotlap detected")
                         hot_once = True
                         playHotlap()
@@ -605,7 +609,7 @@ def onEnableWin(x):
 
 def onEnableHotlap(x):
     global enable_hotlap
-    value = int(ac.getValue(Win))
+    value = int(ac.getValue(Hotlap))
     enable_hotlap = value
     config['Hotlap']['active'] = str(value)
 
