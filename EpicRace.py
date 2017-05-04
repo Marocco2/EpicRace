@@ -66,7 +66,7 @@ WinLabel = LoseLabel = audiolabel = ""
 session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
 ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
 
-lastlap = bestlap = 0
+lap = lastlap = bestlap = 0
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = \
     win_tracks = win_with_sweat_tracks = start_race_tracks = \
@@ -100,7 +100,8 @@ def initSoundPack(audio_source):
 
 def priority_queue(location, isPlaying):
     try:
-        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global sound_player
+        global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
         global overflow
         # priority clip cancels other audio.
         stopPlaying(isPlaying)
@@ -113,7 +114,8 @@ def priority_queue(location, isPlaying):
 
 def queue(location):
     try:
-        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global sound_player
+        global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
         global overflow
         # new fmod audio:
         sound_player.queueSong(location)
@@ -123,7 +125,8 @@ def queue(location):
 
 
 def stopPlaying(isPlaying="all"):
-    global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+    global sound_player
+    global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
     global overflow
     sound_player.stop()
     if isPlaying == "isPlayingStartRace":
@@ -379,7 +382,7 @@ def acUpdate(deltaT):
     global enable_overtake, enable_lose, enable_win, enable_before_race
     global enable_suspense, enable_hotlap, suspense_laps, log
     global audio, overtake, iovertake, done, position, newposition
-    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once
+    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once, lap
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense
     global isPlayingAfterRace, isPlayingOvertake, isPlayingHotlap
@@ -529,7 +532,9 @@ def acUpdate(deltaT):
 
             if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lastlap != "-:--:---" and numberOfLaps > 2 and not hot_once and not isPlayingHotlap:
+                    if lastlap == bestlap and lastlap != "-:--:---" and lap != lastlap and completedLaps > 1\
+                            and not hot_once and not isPlayingHotlap:
+                        lap = lastlap
                         ac.log(log + "Hotlap detected")
                         hot_once = True
                         playHotlap()
