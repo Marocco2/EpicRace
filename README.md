@@ -1,7 +1,7 @@
-### Have you ever wish to play a soundtrack if you have overtaken the leader of the race? 
+### Have you ever wish to play a soundtrack if you have overtaken the leader of the race?
 ## NO?
 # YOU'RE KIDDING ME!
-Just download and enable EPIC Race. It plays music if:
+Download and enable EPIC Race. It plays music if:
 
 - you overtake the leader
 - you win
