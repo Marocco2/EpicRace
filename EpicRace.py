@@ -1,3 +1,4 @@
+# Made with <3 by Marocco2
 # Sound player code by Rombik @ AC forums.
 # Sound player updates for fmod-ex by rafffel @ AC forums.
 
