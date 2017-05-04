@@ -22,7 +22,7 @@ os.environ['PATH'] += ";."
 importError = False
 
 try:
-    from BOX import box, sim_info, win32con
+    from BOX import box, sim_info
 except:
     ac.log('EpicRace: error loading BOX modules: ' + traceback.format_exc())
     importError = True
@@ -217,7 +217,7 @@ def playOvertake():
 def acMain(ac_version):
     global appWindow
     global sound_player, SoundPackSpinner, VolumeSpinner
-    global Beforerace, Overtake, Suspense, Win, Lose, labeldesc
+    global Beforerace, Overtake, Suspense, Win, Lose, labeldesc, Hotlap
     global StatusLabel, NotificationLabel, audio, audiolist, BeforeraceLabel, OvertakeLabel, SuspenseLabel
     global WinLabel, LoseLabel, audiolabel, position, debuglabel
     # DEBUG INFO
@@ -430,8 +430,8 @@ def acUpdate(deltaT):
 
     if overflow < 50:
 
-        #DEBUG ONLY
-        #overflow += 1
+        # DEBUG ONLY
+        # overflow += 1
 
         if status == 2:
             if session == 2:  # Race sessions
