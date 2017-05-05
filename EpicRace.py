@@ -9,7 +9,7 @@ import random
 import sys
 import time
 import traceback
-
+import update
 import ac
 
 if platform.architecture()[0] == "64bit":
@@ -544,11 +544,19 @@ def acUpdate(deltaT):
 def CheckNewUpdate():
     global Status, StatusLabel, branch
     try:
-        Status = box.github_newupdate('Marocco2/EpicRace', branch)
-        ac.setText(StatusLabel, Status)
+        Status = update.update()
+        if Status == 0:
+            Status = "New update is installed"
+            ac.log('EpicRace: ' + Status)
+            ac.setText(StatusLabel, Status)
+        else:
+            ac.log('EpicRace: Error Update' + Status)
+            Status = "There was an error while installing new update"
+            ac.log('EpicRace: ' + Status)
+            ac.setText(StatusLabel, Status)
     except:
-        ac.log('EpicRace: No internet connection')
         Status = "No internet connection"
+        ac.log('EpicRace: ' + Status)
         ac.setText(StatusLabel, Status)
 
 
