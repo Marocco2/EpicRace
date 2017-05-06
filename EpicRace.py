@@ -532,7 +532,7 @@ def acUpdate(deltaT):
 
             if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lastlap != "-:--:---" and lap != lastlap and completedLaps > 1\
+                    if lastlap == bestlap and lap != lastlap and completedLaps > 1\
                             and not hot_once and not isPlayingHotlap:
                         lap = lastlap
                         ac.log(log + "Hotlap detected")
