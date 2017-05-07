@@ -401,10 +401,10 @@ def acUpdate(deltaT):
     if ((sessionTime <= 0 and session <= 2) or session == 3) and lenqueue == 0 and (
                                 isPlayingStartRace or
                                 isPlayingBeforeRace or
-                            isPlayingSuspense or
-                        isPlayingAfterRace or
-                    isPlayingOvertake or
-                isPlayingHotlap):
+                                isPlayingSuspense or
+                                isPlayingAfterRace or
+                                isPlayingOvertake or
+                                isPlayingHotlap):
         wait_a += 1
         if lenqueue == 0 and wait_a == 100:
             isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
@@ -430,7 +430,8 @@ def acUpdate(deltaT):
                    "\nisPlayingSuspense: " + str(isPlayingSuspense) +
                    "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
                    "\nisPlayingHotlap: " + str(isPlayingHotlap) +
-                   "\nisPlayingOvertake: " + str(isPlayingOvertake))
+                   "\nisPlayingOvertake: " + str(isPlayingOvertake) +
+                   "\nTest autoupdate")
 
     if overflow < 50:
 
@@ -532,7 +533,7 @@ def acUpdate(deltaT):
 
             if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lap != lastlap and completedLaps > 1\
+                    if lastlap == bestlap and lap != lastlap and completedLaps > 1 \
                             and not hot_once and not isPlayingHotlap:
                         lap = lastlap
                         ac.log(log + "Hotlap detected")
@@ -545,7 +546,7 @@ def acUpdate(deltaT):
         exit()
 
 
-# TODO: Make it work
+# Done
 def CheckNewUpdate():
     global Status, StatusLabel, branch
     try:
