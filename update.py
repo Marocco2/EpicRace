@@ -9,6 +9,7 @@ configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
 config = configparser.ConfigParser()
 config.read(configfile)
 
+
 def async(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -21,9 +22,9 @@ def async(func):
 
 
 def log(log):
-    prelog = ('update: ' + str(log))
+    log = ('update: ' + str(log))
     with open("apps\\python\\EpicRace\\log.txt", 'w') as h:
-        h.write(prelog)
+        h.write(log)
         h.close()
 
 
@@ -56,6 +57,10 @@ def update():
             update_status = 2
             log(update_status)
             return update_status
+    except:
+        log(traceback.format_exc())
+        update_status = 3
+        return update_status
 
 #@async
 def get_file(link, filed):

@@ -430,8 +430,7 @@ def acUpdate(deltaT):
                    "\nisPlayingSuspense: " + str(isPlayingSuspense) +
                    "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
                    "\nisPlayingHotlap: " + str(isPlayingHotlap) +
-                   "\nisPlayingOvertake: " + str(isPlayingOvertake) +
-                   "\nTest autoupdate")
+                   "\nisPlayingOvertake: " + str(isPlayingOvertake))
 
     if overflow < 50:
 
@@ -545,13 +544,17 @@ def acUpdate(deltaT):
         ac.log(log + "BSOD avoided. THERE WAS AN OVERFLOW")
         exit()
 
-# Done
+
 def CheckNewUpdate():
     global Status, StatusLabel, branch
     try:
         Status = update.update()
         if Status == 0:
-            Status = "New update is installed"
+            Status = "New update is installed. Restart to see changes"
+            ac.log('EpicRace: ' + Status)
+            ac.setText(StatusLabel, Status)
+        if Status == 2:
+            Status = "No new update."
             ac.log('EpicRace: ' + Status)
             ac.setText(StatusLabel, Status)
         else:
