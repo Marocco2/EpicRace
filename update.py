@@ -2,10 +2,23 @@ from BOX.box_lib import requests
 import os
 import configparser
 import traceback
+import functools
+import threading
 
 configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
 config = configparser.ConfigParser()
 config.read(configfile)
+
+def async(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        t = threading.Thread(target=func, args=args, kwargs=kwargs)
+        t.daemon = True
+        t.start()
+        return t
+
+    return wrapper
+
 
 def log(log):
     prelog = ('update: ' + str(log))
@@ -13,8 +26,9 @@ def log(log):
         h.write(prelog)
         h.close()
 
-def update():
 
+@async
+def update():
     with open("apps\\python\\EpicRace\\sha.txt", 'r') as g:
         sha = g.read()
         g.close()
@@ -47,9 +61,9 @@ def update():
         update_status = 3
         return update_status
 
-
-def get_file(link, file):
+@async
+def get_file(link, filed):
     f = requests.get(link)
-    with open(file, 'w') as j:
+    with open(filed, 'w') as j:
         j.write(f.text)
         j.close()
