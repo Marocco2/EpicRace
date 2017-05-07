@@ -424,9 +424,9 @@ def acUpdate(deltaT):
                    "\nBest lap: " + repr(bestlap) +
                    "\nPosition: " + repr(ac.getCarRealTimeLeaderboardPosition(0)) +
                    "\nLength queue: " + str(lenqueue) +
-                   "\nLead position: " + repr(ac.getCarLeaderboardPosition(0)) +
-                   "\nisPlayingStartRace: " + str(isPlayingStartRace) +
-                   "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
+                   #"\nLead position: " + repr(ac.getCarLeaderboardPosition(0)) +
+                   #"\nisPlayingStartRace: " + str(isPlayingStartRace) +
+                   #"\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
                    "\nisPlayingSuspense: " + str(isPlayingSuspense) +
                    "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
                    "\nisPlayingHotlap: " + str(isPlayingHotlap) +
