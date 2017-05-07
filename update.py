@@ -45,9 +45,9 @@ def update():
             download_link_epicrace = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/EpicRace.py"
             download_link_update = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/update.py"
             download_link_ini = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/EpicRace.ini"
-            get_file(download_link_epicrace, "EpicRace.py")
-            get_file(download_link_ini, "EpicRace.ini")
-            get_file(download_link_update, "update.py")
+            get_file(download_link_epicrace, "apps\\python\\EpicRace\\EpicRace.py")
+            get_file(download_link_ini, "apps\\python\\EpicRace\\EpicRace.ini")
+            get_file(download_link_update, "apps\\python\\EpicRace\\update.py")
             update_status = 0  # ok
             log(update_status)
             return update_status
@@ -56,10 +56,6 @@ def update():
             update_status = 2
             log(update_status)
             return update_status
-    except:
-        log(traceback.format_exc())
-        update_status = 3
-        return update_status
 
 #@async
 def get_file(link, filed):
