@@ -259,7 +259,7 @@ class SoundPlayer(object):
                     sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
                     self.queue.append({'sound': sound, 'mode': self.sound_mode})
                     state = self._play_event.is_set()
-                    if state == False:
+                    if not state:
                         self._play_event.set()
                     return 1  # mp3 loaded
                 else:
