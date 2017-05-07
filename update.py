@@ -28,9 +28,9 @@ def update():
         download_link_epicrace = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/EpicRace.py"
         download_link_update = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/update.py"
         download_link_ini = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/EpicRace.ini"
-        get_file(download_link_epicrace, "EpicRace.py")
-        get_file(download_link_ini, "EpicRace.ini")
-        get_file(download_link_update, "update.py")
+        get_file(download_link_epicrace, "apps\\python\\EpicRace\\EpicRace.py")
+        get_file(download_link_ini, "apps\\python\\EpicRace\\EpicRace.ini")
+        get_file(download_link_update, "apps\\python\\EpicRace\\update.py")
         update_status = 0  # ok
         return update_status
     else:
