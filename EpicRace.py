@@ -9,7 +9,6 @@ import random
 import sys
 import time
 import traceback
-import update
 import ac
 
 if platform.architecture()[0] == "64bit":
@@ -24,6 +23,7 @@ importError = False
 
 try:
     from BOX import box, sim_info
+    import update
 except:
     ac.log('EpicRace: error loading BOX modules: ' + traceback.format_exc())
     importError = True
@@ -544,7 +544,6 @@ def acUpdate(deltaT):
         stopPlaying()
         ac.log(log + "BSOD avoided. THERE WAS AN OVERFLOW")
         exit()
-
 
 # Done
 def CheckNewUpdate():
