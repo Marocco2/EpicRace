@@ -20,7 +20,7 @@
 #
 # Assetto Corsa framework created by Marco 'Marocco2' Mollace
 #
-# version 0.1.3
+# version 0.2
 #
 # Usage of this library is under LGPLv3. Be careful :)
 #
@@ -98,7 +98,7 @@ def notification(telegram_bot_oauth):
             ac.log('BOX: Notification from Telegram: ' + var_notify)
             return var_notify
         else:
-            var_notify = "No new messages"
+            var_notify = "No Telegram connection"
             ac.log('BOX: ' + var_notify)
     except:
         ac.log('BOX: No Internet connection')
@@ -258,7 +258,7 @@ class SoundPlayer(object):
                     sound = self.player.create_sound(bytes(filename, encoding='utf-8'), self.sound_mode)
                     self.queue.append({'sound': sound, 'mode': self.sound_mode})
                     state = self._play_event.is_set()
-                    if state == False:
+                    if not state:
                         self._play_event.set()
                     return 1  # mp3 loaded
                 else:

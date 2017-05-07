@@ -9,7 +9,6 @@ import random
 import sys
 import time
 import traceback
-
 import ac
 
 if platform.architecture()[0] == "64bit":
@@ -24,6 +23,7 @@ importError = False
 
 try:
     from BOX import box, sim_info
+    import update
 except:
     ac.log('EpicRace: error loading BOX modules: ' + traceback.format_exc())
     importError = True
@@ -66,7 +66,7 @@ WinLabel = LoseLabel = audiolabel = ""
 session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
 ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
 
-lastlap = bestlap = 0
+lap = lastlap = bestlap = 0
 
 list_tracks = audio_folder = before_race_tracks = epic_tracks = \
     win_tracks = win_with_sweat_tracks = start_race_tracks = \
@@ -100,7 +100,8 @@ def initSoundPack(audio_source):
 
 def priority_queue(location, isPlaying):
     try:
-        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global sound_player
+        global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
         global overflow
         # priority clip cancels other audio.
         stopPlaying(isPlaying)
@@ -113,7 +114,8 @@ def priority_queue(location, isPlaying):
 
 def queue(location):
     try:
-        global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+        global sound_player
+        global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
         global overflow
         # new fmod audio:
         sound_player.queueSong(location)
@@ -123,7 +125,8 @@ def queue(location):
 
 
 def stopPlaying(isPlaying="all"):
-    global sound_player, isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
+    global sound_player
+    global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
     global overflow
     sound_player.stop()
     if isPlaying == "isPlayingStartRace":
@@ -379,7 +382,7 @@ def acUpdate(deltaT):
     global enable_overtake, enable_lose, enable_win, enable_before_race
     global enable_suspense, enable_hotlap, suspense_laps, log
     global audio, overtake, iovertake, done, position, newposition
-    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once
+    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once, lap
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense
     global isPlayingAfterRace, isPlayingOvertake, isPlayingHotlap
@@ -398,10 +401,10 @@ def acUpdate(deltaT):
     if ((sessionTime <= 0 and session <= 2) or session == 3) and lenqueue == 0 and (
                                 isPlayingStartRace or
                                 isPlayingBeforeRace or
-                            isPlayingSuspense or
-                        isPlayingAfterRace or
-                    isPlayingOvertake or
-                isPlayingHotlap):
+                                isPlayingSuspense or
+                                isPlayingAfterRace or
+                                isPlayingOvertake or
+                                isPlayingHotlap):
         wait_a += 1
         if lenqueue == 0 and wait_a == 100:
             isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
@@ -529,7 +532,9 @@ def acUpdate(deltaT):
 
             if session == 3:  # Hotlap session
                 if enable_hotlap:
-                    if lastlap == bestlap and lastlap != "-:--:---" and numberOfLaps > 2 and not hot_once and not isPlayingHotlap:
+                    if lastlap == bestlap and lap != lastlap and completedLaps > 1 \
+                            and not hot_once and not isPlayingHotlap:
+                        lap = lastlap
                         ac.log(log + "Hotlap detected")
                         hot_once = True
                         playHotlap()
@@ -540,15 +545,25 @@ def acUpdate(deltaT):
         exit()
 
 
-# TODO: Make it work
 def CheckNewUpdate():
     global Status, StatusLabel, branch
     try:
-        Status = box.github_newupdate('Marocco2/EpicRace', branch)
-        ac.setText(StatusLabel, Status)
+        Status = update.update()
+        if Status == 0:
+            Status = "New update is installed. Restart to see changes"
+            ac.log('EpicRace: ' + Status)
+            ac.setText(StatusLabel, Status)
+        if Status == 2:
+            Status = "No new update."
+            ac.log('EpicRace: ' + Status)
+            ac.setText(StatusLabel, Status)
+        else:
+            Status = "There was an error while installing new update.\nError code: " + str(Status)
+            ac.log('EpicRace: Error Update ' + Status)
+            ac.setText(StatusLabel, Status)
     except:
-        ac.log('EpicRace: No internet connection')
-        Status = "No internet connection"
+        Status = "no internet connection"
+        ac.log('EpicRace: Autoupdate ' + Status + traceback.format_exc())
         ac.setText(StatusLabel, Status)
 
 
