@@ -27,7 +27,7 @@ def log(log):
         h.close()
 
 
-@async
+#@async
 def update():
     with open("apps\\python\\EpicRace\\sha.txt", 'r') as g:
         sha = g.read()
@@ -61,7 +61,7 @@ def update():
         update_status = 3
         return update_status
 
-@async
+#@async
 def get_file(link, filed):
     f = requests.get(link)
     with open(filed, 'w') as j:
