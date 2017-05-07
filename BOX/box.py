@@ -20,7 +20,7 @@
 #
 # Assetto Corsa framework created by Marco 'Marocco2' Mollace
 #
-# version 0.1.3
+# version 0.2
 #
 # Usage of this library is under LGPLv3. Be careful :)
 #
@@ -31,6 +31,7 @@ import traceback
 import os
 import sys
 import platform
+import update
 
 try:
     import ctypes
@@ -98,7 +99,7 @@ def notification(telegram_bot_oauth):
             ac.log('BOX: Notification from Telegram: ' + var_notify)
             return var_notify
         else:
-            var_notify = "No new messages"
+            var_notify = "No Telegram connection"
             ac.log('BOX: ' + var_notify)
     except:
         ac.log('BOX: No Internet connection')
