@@ -2,7 +2,6 @@ from BOX.box_lib import requests
 import os
 import configparser
 import traceback
-import ac
 
 configfile = os.path.join(os.path.dirname(__file__), 'EpicRace.ini')
 config = configparser.ConfigParser()
@@ -41,7 +40,10 @@ def update():
             update_status = 2
             return update_status
     except:
-        ac.log('update: ' + traceback.format_exc())
+        log = ('update: ' + traceback.format_exc())
+        with open("log.txt", 'w') as j:
+            j.write(log)
+            j.close()
         update_status = 3
         return update_status
 
