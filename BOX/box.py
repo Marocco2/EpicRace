@@ -31,7 +31,6 @@ import traceback
 import os
 import sys
 import platform
-import update
 
 try:
     import ctypes
