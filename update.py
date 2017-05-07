@@ -24,7 +24,7 @@ def update():
         headers = {'Accept': 'application/vnd.github.VERSION.sha'}
         r = requests.get(check_link, headers=headers)
         if r.text != sha:  # Check if server version and client version is the same
-            with open("apps\\python\\EpicRace\\sha.txt", 'w') as j:
+            with open("sha.txt", 'w') as j:
                 j.write(r.text)
                 j.close()
             download_link_epicrace = "https://raw.githubusercontent.com/Marocco2/EpicRace/" + branch + "/EpicRace.py"

@@ -554,13 +554,12 @@ def CheckNewUpdate():
             ac.log('EpicRace: ' + Status)
             ac.setText(StatusLabel, Status)
         else:
-            ac.log('EpicRace: Error Update' + Status)
             Status = "There was an error while installing new update"
-            ac.log('EpicRace: ' + Status)
+            ac.log('EpicRace: Error Update' + Status)
             ac.setText(StatusLabel, Status)
     except:
-        Status = "No internet connection"
-        ac.log('EpicRace: ' + Status)
+        Status = "no internet connection"
+        ac.log('EpicRace: Autoupdate ' + Status + traceback.format_exc())
         ac.setText(StatusLabel, Status)
 
 
