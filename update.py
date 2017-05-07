@@ -56,6 +56,10 @@ def update():
             update_status = 2
             log(update_status)
             return update_status
+    except:
+        log(traceback.format_exc())
+        update_status = 3
+        return update_status
 
 #@async
 def get_file(link, filed):
