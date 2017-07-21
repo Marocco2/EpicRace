@@ -64,8 +64,8 @@ appWindow = sound_player = SoundPackSpinner = VolumeSpinner = \
     Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = \
     BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
-WinLabel = LoseLabel = audiolabel = ""
-session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = 0
+WinLabel = PitLabel = HotlapLabel = LoseLabel = audiolabel = ""
+session = sessionTime = numberOfLaps = completedLaps = overflow = wait_a = gain_1 = gain_2 =0
 ar_once = ov_once = sus_once = sr_once = br_once = hot_once = False
 
 lap = lastlap = bestlap = 0
@@ -222,8 +222,8 @@ def playOvertake():
 
 def acMain(ac_version):
     global appWindow
-    global sound_player, SoundPackSpinner, VolumeSpinner
-    global Beforerace, Overtake, Suspense, Win, Lose, labeldesc, Hotlap
+    global sound_player, SoundPackSpinner, VolumeSpinner, labeldesc
+    global Beforerace, Overtake, Suspense, Win, Lose, Pit, Hotlap
     global StatusLabel, NotificationLabel, audio, audiolist, BeforeraceLabel, OvertakeLabel, SuspenseLabel
     global WinLabel, LoseLabel, audiolabel, position, debuglabel
     # DEBUG INFO
@@ -233,7 +233,7 @@ def acMain(ac_version):
     global session, sessionTime, numberOfLaps, completedLaps
 
     appWindow = ac.newApp("Epic Race")
-    ac.setSize(appWindow, 430, 350)
+    ac.setSize(appWindow, 430, 400)
     ac.setTitle(appWindow, "Epic Race")
     ac.setBackgroundOpacity(appWindow, 0.5)
     ac.drawBorder(appWindow, 0)
@@ -258,89 +258,47 @@ def acMain(ac_version):
     ac.setFontColor(volumelabel, 1, 1, 1, 1)
     ac.setFontSize(volumelabel, 15)
 
-    Beforerace = ac.addCheckBox(appWindow, "")
-    ac.setValue(Beforerace, enable_before_race)
-    ac.setPosition(Beforerace, 10, 130)
-    ac.setSize(Beforerace, 20, 20)
-    ac.drawBorder(Beforerace, 1)
-    ac.addOnCheckBoxChanged(Beforerace, onEnableBeforeRace)
-    #
-    Overtake = ac.addCheckBox(appWindow, "")
-    ac.setValue(Overtake, enable_overtake)
-    ac.setPosition(Overtake, 10, 160)
-    ac.setSize(Overtake, 20, 20)
-    ac.drawBorder(Overtake, 1)
-    ac.addOnCheckBoxChanged(Overtake, onEnableOverTake)
-    #
-    Suspense = ac.addCheckBox(appWindow, "")
-    ac.setValue(Suspense, enable_suspense)
-    ac.setPosition(Suspense, 10, 190)
-    ac.setSize(Suspense, 20, 20)
-    ac.drawBorder(Suspense, 1)
-    ac.addOnCheckBoxChanged(Suspense, onEnableSuspense)
-    #
-    Win = ac.addCheckBox(appWindow, "")
-    ac.setValue(Win, enable_win)
-    ac.setPosition(Win, 10, 220)
-    ac.setSize(Win, 20, 20)
-    ac.drawBorder(Win, 1)
-    ac.addOnCheckBoxChanged(Win, onEnableWin)
-    #
-    Lose = ac.addCheckBox(appWindow, "")
-    ac.setValue(Lose, enable_lose)
-    ac.setPosition(Lose, 10, 250)
-    ac.setSize(Lose, 20, 20)
-    ac.drawBorder(Lose, 1)
-    ac.addOnCheckBoxChanged(Lose, onEnableLose)
-    #
-    Hotlap = ac.addCheckBox(appWindow, "")
-    ac.setValue(Hotlap, enable_hotlap)
-    ac.setPosition(Hotlap, 10, 280)
-    ac.setSize(Hotlap, 20, 20)
-    ac.drawBorder(Hotlap, 1)
-    ac.addOnCheckBoxChanged(Hotlap, onEnableHotlap)
-    #
-    BeforeraceLabel = ac.addLabel(appWindow, "Enable before race")
-    ac.setPosition(BeforeraceLabel, 40, 130)
-    ac.setFontColor(BeforeraceLabel, 1, 1, 1, 1)
-    ac.setFontSize(BeforeraceLabel, 15)
-    #
-    OvertakeLabel = ac.addLabel(appWindow, "Enable overtake")
-    ac.setPosition(OvertakeLabel, 40, 160)
-    ac.setFontColor(OvertakeLabel, 1, 1, 1, 1)
-    ac.setFontSize(OvertakeLabel, 15)
-    #
-    SuspenseLabel = ac.addLabel(appWindow, "Enable suspense")
-    ac.setPosition(SuspenseLabel, 40, 190)
-    ac.setFontColor(SuspenseLabel, 1, 1, 1, 1)
-    ac.setFontSize(SuspenseLabel, 15)
-    #
-    WinLabel = ac.addLabel(appWindow, "Enable win")
-    ac.setPosition(WinLabel, 40, 220)
-    ac.setFontColor(WinLabel, 1, 1, 1, 1)
-    ac.setFontSize(WinLabel, 15)
-    #
-    LoseLabel = ac.addLabel(appWindow, "Enable lose")
-    ac.setPosition(LoseLabel, 40, 250)
-    ac.setFontColor(LoseLabel, 1, 1, 1, 1)
-    ac.setFontSize(LoseLabel, 15)
-    #
-    HotlapLabel = ac.addLabel(appWindow, "Enable hotlap")
-    ac.setPosition(HotlapLabel, 40, 280)
-    ac.setFontColor(HotlapLabel, 1, 1, 1, 1)
-    ac.setFontSize(HotlapLabel, 15)
+    events = [Beforerace, Overtake, Suspense, Win, Lose, Pit, Hotlap]
+    label = [BeforeraceLabel, OvertakeLabel, SuspenseLabel, WinLabel, LoseLabel, PitLabel, HotlapLabel]
+    enable = [enable_overtake, enable_lose, enable_win, enable_hotlap,
+              enable_before_race, enable_suspense, enable_pit]
+    on_enable = [onEnableBeforeRace, onEnableHotlap, onEnableLose, onEnableOverTake, onEnablePit,
+                onEnableSuspense, onEnableWin]
+
+    events.sort()
+    label.sort()
+    enable.sort()
+    on_enable.sort()
+
+    for ev in events:
+        global gain_1, gain_2
+        ev = ac.addCheckBox(appWindow, "")
+        for en in events:
+            ac.setValue(ev, en)
+        gain_1 += 30
+        ac.setPosition(ev, 10, 130 + gain_1)
+        ac.setSize(ev, 20, 20)
+        ac.drawBorder(ev, 1)
+        for on in on_enable:
+            ac.addOnCheckBoxChanged(ev, on)
+        for l in label:
+            gain_2 += 30
+            l = ac.addLabel(appWindow, "Enable " + str(ev))
+            ac.setPosition(l, 40, 130 + gain_2)
+            ac.setFontColor(l, 1, 1, 1, 1)
+            ac.setFontSize(l, 15)
     #
     labeldesc = ac.addLabel(appWindow, "Something is broken")
     ac.setPosition(labeldesc, 180, 40)
     ac.setSize(labeldesc, 200, 200)
     #
     StatusLabel = ac.addLabel(appWindow, Status)
-    ac.setPosition(StatusLabel, 10, 305)
+    ac.setPosition(StatusLabel, 10, 355)
     ac.setFontColor(StatusLabel, 1, 1, 1, 1)
     ac.setFontSize(StatusLabel, 15)
     #
     NotificationLabel = ac.addLabel(appWindow, Notify)
-    ac.setPosition(NotificationLabel, 10, 325)
+    ac.setPosition(NotificationLabel, 10, 375)
     ac.setFontColor(NotificationLabel, 1, 1, 1, 1)
     ac.setFontSize(NotificationLabel, 12)
     ac.setSize(NotificationLabel, 24, 310)
@@ -453,9 +411,10 @@ def acUpdate(deltaT):
                     stopPlaying()
 
                 if enable_pit and isPlayingPit and not pit_once:
-                    ac.log(log + "Pit detected")
-                    pit_once = True
-                    playPit()
+                    if pitlane:
+                        ac.log(log + "Pit detected")
+                        pit_once = True
+                        playPit()
 
                 if enable_overtake and not isPlayingOvertake and not ov_once and sessionTime < 0 and (
                             numberOfLaps - completedLaps) != 0:
