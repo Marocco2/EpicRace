@@ -50,6 +50,7 @@ leader = config.getboolean('Overtake', 'loop leader')
 audio = config['Audio']['source']
 audio_volume = int(config['Audio']['volume'])
 
+sweat = int(config['Victory']['sweat'])
 suspense_laps = int(config['Suspense']['laps'])
 enable_before_race = config.getboolean('Before Race', 'active')
 enable_overtake = config.getboolean('Overtake', 'active')
@@ -57,6 +58,7 @@ enable_suspense = config.getboolean('Suspense', 'active')
 enable_hotlap = config.getboolean('Hotlap', 'active')
 enable_win = config.getboolean('Victory', 'active')
 enable_lose = config.getboolean('Lose', 'active')
+enable_pit = config.getboolean('Pit', 'active')
 
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = \
     Beforerace = Overtake = Suspense = Win = Lose = ""
@@ -75,12 +77,12 @@ list_tracks = audio_folder = before_race_tracks = epic_tracks = \
 lose_tracks = 0
 
 isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
-    isPlayingAfterRace = isPlayingOvertake = isPlayingHotlap = False
+    isPlayingAfterRace = isPlayingOvertake = isPlayingHotlap = isPlayingPit = False
 
 
 def initSoundPack(audio_source):
     global list_tracks, audio_folder, before_race_tracks, epic_tracks, win_tracks, win_with_sweat_tracks
-    global start_race_tracks, lose_tracks, suspense_tracks, surprise_tracks
+    global start_race_tracks, lose_tracks, suspense_tracks, surprise_tracks, pit_tracks
     audio_folder = "apps\\python\\EpicRace\\SoundPacks\\" + audio_source
     list_tracks = os.listdir(audio_folder)
 
@@ -90,6 +92,7 @@ def initSoundPack(audio_source):
 
     before_race_tracks = contains("before_race")
     epic_tracks = contains("epic")
+    pit_tracks = contains("pit")
     win_tracks = contains("win")
     lose_tracks = contains("lose")
     win_with_sweat_tracks = contains("w_with_sweat")
@@ -124,23 +127,13 @@ def queue(location):
         ac.log('EpicRace: error loading song ' + traceback.format_exc())
 
 
-def stopPlaying(isPlaying="all"):
-    global sound_player
+def stopPlaying():
+    global sound_player, overflow
     global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
-    global overflow
+    global isPlayingPit
     sound_player.stop()
-    if isPlaying == "isPlayingStartRace":
-        isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
-    if isPlaying == "isPlayingBeforeRace":
-        isPlayingStartRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
-    if isPlaying == "isPlayingSuspense":
-        isPlayingStartRace = isPlayingBeforeRace = isPlayingAfterRace = isPlayingOvertake = False
-    if isPlaying == "isPlayingAfterRace":
-        isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingOvertake = False
-    if isPlaying == "isPlayingOvertake":
-        isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = False
-    if isPlaying == "all":
-        isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace = isPlayingOvertake = False
+    isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = isPlayingAfterRace =\
+        isPlayingOvertake = isPlayingPit = False
 
 
 def playBeforeRace():
@@ -148,15 +141,24 @@ def playBeforeRace():
     isPlayingBeforeRace = True
     location = random.choice(before_race_tracks)
     location = os.path.join(audio_folder, location)
-    priority_queue(location, "isPlayingBeforeRace")
+    priority_queue(location)
     br_once = False
+
+
+def playPit():
+    global audio_folder, pit_tracks, isPlayingPit, pit_once
+    isPlayingPit = True
+    location = random.choice(pit_tracks)
+    location = os.path.join(audio_folder, location)
+    priority_queue(location)
+    pit_once = False
 
 
 def playStartRace():
     global audio_folder, start_race_tracks, isPlayingStartRace, sr_once
     location = random.choice(start_race_tracks)
     location = os.path.join(audio_folder, location)
-    priority_queue(location, "isPlayingStartRace")
+    priority_queue(location)
     isPlayingStartRace = True
     sr_once = False
 
@@ -181,21 +183,21 @@ def playSuspense():
 
 def playAfterRace(win_or_lose):
     global audio_folder, win_tracks, isPlayingAfterRace, count_overtake, win_with_sweat_tracks, lose_tracks, overtake
-    global ar_once, hot_once
-    if win_or_lose == "win" and count_overtake < 5:
+    global ar_once, hot_once, sweat
+    if win_or_lose == "win" and count_overtake < sweat:
         location = random.choice(win_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, "isPlayingAfterRace")
+        priority_queue(location)
 
-    if win_or_lose == "win" and count_overtake >= 5:
+    if win_or_lose == "win" and count_overtake >= sweat:
         location = random.choice(win_with_sweat_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, "isPlayingAfterRace")
+        priority_queue(location)
 
     if win_or_lose == "lose":
         location = random.choice(lose_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, "isPlayingAfterRace")
+        priority_queue(location)
     isPlayingAfterRace = True
     ar_once = False
     hot_once = False
@@ -379,12 +381,12 @@ def spinner_config(spinner, x, y, xl, yl, min, step, max, value, evt):
 
 
 def acUpdate(deltaT):
-    global enable_overtake, enable_lose, enable_win, enable_before_race
+    global enable_overtake, enable_lose, enable_win, enable_before_race, enable_pit
     global enable_suspense, enable_hotlap, suspense_laps, log
     global audio, overtake, iovertake, done, position, newposition
-    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once, lap
+    global start_time, finish_time, count_overtake, bestlap, lastlap, hot_once, pit_once, lap
     global session, sessionTime, numberOfLaps, completedLaps, debuglabel, overflow, sound_player
-    global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense
+    global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingPit
     global isPlayingAfterRace, isPlayingOvertake, isPlayingHotlap
     global ar_once, ov_once, sus_once, sr_once, br_once, wait_a, debug, leader
 
@@ -397,6 +399,7 @@ def acUpdate(deltaT):
     lenqueue = sound_player.lenQueue()
     lastlap = info.graphics.lastTime
     bestlap = info.graphics.bestTime
+    pitlane = info.graphics.isInPitLane
 
     if ((sessionTime <= 0 and session <= 2) or session == 3) and lenqueue == 0 and (
                                 isPlayingStartRace or
@@ -408,7 +411,7 @@ def acUpdate(deltaT):
         wait_a += 1
         if lenqueue == 0 and wait_a == 100:
             isPlayingStartRace = isPlayingBeforeRace = isPlayingSuspense = \
-                isPlayingAfterRace = isPlayingHotlap = isPlayingOvertake = False
+                isPlayingAfterRace = isPlayingHotlap = isPlayingOvertake = isPlayingPit = False
             ac.log(log + "lenqueue reset")
             wait_a = 0
 
@@ -429,6 +432,7 @@ def acUpdate(deltaT):
                    "\nisPlayingBeforeRace: " + str(isPlayingBeforeRace) +
                    "\nisPlayingSuspense: " + str(isPlayingSuspense) +
                    "\nisPlayingAfterRace: " + str(isPlayingAfterRace) +
+                   "\nisPlayingPit: " + str(isPlayingPit) +
                    "\nisPlayingHotlap: " + str(isPlayingHotlap) +
                    "\nisPlayingOvertake: " + str(isPlayingOvertake))
 
@@ -447,6 +451,11 @@ def acUpdate(deltaT):
 
                 if enable_before_race and isPlayingBeforeRace and sessionTime <= 0:
                     stopPlaying()
+
+                if enable_pit and isPlayingPit and not pit_once:
+                    ac.log(log + "Pit detected")
+                    pit_once = True
+                    playPit()
 
                 if enable_overtake and not isPlayingOvertake and not ov_once and sessionTime < 0 and (
                             numberOfLaps - completedLaps) != 0:
@@ -628,6 +637,13 @@ def onEnableHotlap(x):
     value = int(ac.getValue(Hotlap))
     enable_hotlap = value
     config['Hotlap']['active'] = str(value)
+
+
+def onEnablePit(x):
+    global enable_pit
+    value = int(ac.getValue(Pit))
+    enable_pit = value
+    config['Pit']['active'] = str(value)
 
 
 def onEnableLose(x):
