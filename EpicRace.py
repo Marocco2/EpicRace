@@ -101,13 +101,13 @@ def initSoundPack(audio_source):
     surprise_tracks = contains("surprise")
 
 
-def priority_queue(location, isPlaying):
+def priority_queue(location):
     try:
         global sound_player
         global isPlayingStartRace, isPlayingBeforeRace, isPlayingSuspense, isPlayingAfterRace, isPlayingOvertake
         global overflow
         # priority clip cancels other audio.
-        stopPlaying(isPlaying)
+        stopPlaying()
         # new fmod audio:
         sound_player.queueSong(location)
         overflow += 2
@@ -211,7 +211,7 @@ def playOvertake():
     if isPlayingSuspense:
         location = random.choice(surprise_tracks)
         location = os.path.join(audio_folder, location)
-        priority_queue(location, "isPlayingOvertake")
+        priority_queue(location)
     else:
         location = random.choice(epic_tracks)
         location = os.path.join(audio_folder, location)
