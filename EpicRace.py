@@ -61,7 +61,7 @@ enable_lose = config.getboolean('Lose', 'active')
 enable_pit = config.getboolean('Pit', 'active')
 
 appWindow = sound_player = SoundPackSpinner = VolumeSpinner = \
-    Beforerace = Overtake = Suspense = Win = Lose = Pit = Hotlap = ""
+    Beforerace = Overtake = Suspense = Win = Lose = ""
 labeldesc = StatusLabel = NotificationLabel = audiolist = \
     BeforeraceLabel = OvertakeLabel = SuspenseLabel = ""
 WinLabel = PitLabel = HotlapLabel = LoseLabel = audiolabel = ""
@@ -260,43 +260,33 @@ def acMain(ac_version):
 
     events = [Beforerace, Overtake, Suspense, Win, Lose, Pit, Hotlap]
     label = [BeforeraceLabel, OvertakeLabel, SuspenseLabel, WinLabel, LoseLabel, PitLabel, HotlapLabel]
+    enable = [enable_overtake, enable_lose, enable_win, enable_hotlap,
+              enable_before_race, enable_suspense, enable_pit]
+    on_enable = [onEnableBeforeRace, onEnableHotlap, onEnableLose, onEnableOverTake, onEnablePit,
+                onEnableSuspense, onEnableWin]
 
     events.sort()
     label.sort()
+    enable.sort()
+    on_enable.sort()
 
     for ev in events:
         global gain_1, gain_2
         ev = ac.addCheckBox(appWindow, "")
-        #for en in events:
-        #    ac.setValue(ev, en)
+        for en in events:
+            ac.setValue(ev, en)
         gain_1 += 30
         ac.setPosition(ev, 10, 130 + gain_1)
         ac.setSize(ev, 20, 20)
         ac.drawBorder(ev, 1)
-        #for on in on_enable:
-        #    ac.addOnCheckBoxChanged(ev, on)
-
-    for l in label:
-        l = ac.addLabel(appWindow, "Enable " + l)
-        ac.setPosition(l, 40, 130 + gain_1)
-        ac.setFontColor(l, 1, 1, 1, 1)
-        ac.setFontSize(l, 15)
-
-    ac.setValue(Beforerace, enable_before_race)
-    ac.setValue(Overtake, enable_overtake)
-    ac.setValue(Suspense, enable_suspense)
-    ac.setValue(Win, enable_win)
-    ac.setValue(Lose, enable_lose)
-    ac.setValue(Pit, enable_pit)
-    ac.setValue(Hotlap, enable_hotlap)
-    #
-    ac.addOnCheckBoxChanged(Beforerace, onEnableBeforeRace)
-    ac.addOnCheckBoxChanged(Overtake, onEnableOverTake)
-    ac.addOnCheckBoxChanged(Suspense, onEnableSuspense)
-    ac.addOnCheckBoxChanged(Win, onEnableWin)
-    ac.addOnCheckBoxChanged(Lose, onEnableLose)
-    ac.addOnCheckBoxChanged(Hotlap, onEnableHotlap)
-    ac.addOnCheckBoxChanged(Pit, onEnablePit)
+        for on in on_enable:
+            ac.addOnCheckBoxChanged(ev, on)
+        for l in label:
+            gain_2 += 30
+            l = ac.addLabel(appWindow, "Enable " + str(ev))
+            ac.setPosition(l, 40, 130 + gain_2)
+            ac.setFontColor(l, 1, 1, 1, 1)
+            ac.setFontSize(l, 15)
     #
     labeldesc = ac.addLabel(appWindow, "Something is broken")
     ac.setPosition(labeldesc, 180, 40)
